@@ -89,7 +89,14 @@ export async function POST(
 
     // 既に承認済みの場合はスキップ
     if (reviewCheck.is_approved) {
-      return NextResponse.json({ message: '既に承認済みです' }, { status: 200 })
+      return new NextResponse(
+        `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>承認済み</title></head>
+<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<p style="font-size: 18px;">既に承認済みです。</p>
+</body></html>`,
+        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      )
     }
 
     // 施設情報を取得
@@ -137,7 +144,14 @@ export async function POST(
       return NextResponse.json({ error: '管理者への通知メール送信に失敗しました' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, message: '施設承認が完了しました' })
+    return new NextResponse(
+      `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>施設承認完了</title></head>
+<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<p style="font-size: 18px;">施設承認が完了しました。</p>
+</body></html>`,
+      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    )
   } catch (error) {
     console.error('Error in facility-approve API:', error)
     return NextResponse.json(

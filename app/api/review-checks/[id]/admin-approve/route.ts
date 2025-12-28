@@ -33,7 +33,14 @@ export async function POST(
 
     // 既に承認済みの場合はスキップ
     if (reviewCheck.is_giftcode_sent) {
-      return NextResponse.json({ message: '既に承認済みです' }, { status: 200 })
+      return new NextResponse(
+        `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>承認済み</title></head>
+<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<p style="font-size: 18px;">既に承認済みです。</p>
+</body></html>`,
+        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      )
     }
 
     // review_checks.is_giftcode_sent を true に、status を completed に更新
@@ -47,7 +54,14 @@ export async function POST(
       return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, message: '管理者承認が完了しました' })
+    return new NextResponse(
+      `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>管理者承認完了</title></head>
+<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<p style="font-size: 18px;">管理者承認が完了しました。</p>
+</body></html>`,
+      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    )
   } catch (error) {
     console.error('Error in admin-approve API:', error)
     return NextResponse.json(
