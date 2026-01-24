@@ -44,7 +44,6 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
   const [newAmountId, setNewAmountId] = useState<number | null>(
     giftCodeAmounts.length > 0 ? giftCodeAmounts[0].id : null
   )
-  const [newExpiresAt, setNewExpiresAt] = useState('')
 
   // CSV Import state
   const [isCsvDialogOpen, setIsCsvDialogOpen] = useState(false)
@@ -175,8 +174,7 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: newCode.trim(),
-          gift_code_amount_id: newAmountId,
-          expires_at: newExpiresAt || null
+          gift_code_amount_id: newAmountId
         })
       })
 
@@ -190,7 +188,6 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
       alert('追加しました')
       setIsAdding(false)
       setNewCode('')
-      setNewExpiresAt('')
       router.refresh()
     } catch (error) {
       console.error('Error adding:', error)
@@ -217,16 +214,66 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
         return
       }
 
-      // Parse CSV (skip header)
-      const rows: { code: string; amount: number }[] = []
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim())
-        if (cols.length >= 2) {
-          rows.push({
-            code: cols[0],
-            amount: parseInt(cols[1])
-          })
+      // Parse CSV/TSV (skip header)
+      // 形式: 値,ギフト券番号,シリアル番号 または 値\tギフト券番号\tシリアル番号
+      const parseCSVLine = (line: string): { amount: string; code: string; serial_number: string } | null => {
+        // タブ区切りの場合
+        if (line.includes('\t')) {
+          const cols = line.split('\t').map(c => c.trim().replace(/^"|"$/g, ''))
+          if (cols.length >= 2) {
+            return {
+              amount: cols[0],
+              code: cols[1],
+              serial_number: cols[2] || ''
+            }
+          }
         }
+
+        // カンマ区切りの場合（ダブルクォートで囲まれたフィールドを処理）
+        const parseQuotedCSV = (csvLine: string): string[] => {
+          const result: string[] = []
+          let current = ''
+          let inQuotes = false
+
+          for (let j = 0; j < csvLine.length; j++) {
+            const char = csvLine[j]
+            if (char === '"') {
+              inQuotes = !inQuotes
+            } else if (char === ',' && !inQuotes) {
+              result.push(current.trim().replace(/^"|"$/g, ''))
+              current = ''
+            } else {
+              current += char
+            }
+          }
+          result.push(current.trim().replace(/^"|"$/g, ''))
+          return result
+        }
+
+        const cols = parseQuotedCSV(line)
+        if (cols.length >= 2) {
+          return {
+            amount: cols[0],
+            code: cols[1],
+            serial_number: cols[2] || ''
+          }
+        }
+        return null
+      }
+
+      const rows: { amount: string; code: string; serial_number: string }[] = []
+      for (let i = 1; i < lines.length; i++) {
+        const parsed = parseCSVLine(lines[i])
+        if (parsed) {
+          rows.push(parsed)
+        }
+      }
+
+      // デバッグ: パースに失敗した場合
+      if (rows.length === 0 && lines.length > 1) {
+        console.log('CSV parse failed. First data line:', JSON.stringify(lines[1]))
+        alert(`CSVのパースに失敗しました。\n\n1行目のデータ:\n${lines[1]}`)
+        return
       }
 
       const response = await fetch('/api/gift-codes/bulk', {
@@ -354,17 +401,6 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      有効期限
-                    </label>
-                    <input
-                      type="date"
-                      value={newExpiresAt}
-                      onChange={(e) => setNewExpiresAt(e.target.value)}
-                      className="w-36 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleAdd}
@@ -377,7 +413,6 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
                       onClick={() => {
                         setIsAdding(false)
                         setNewCode('')
-                        setNewExpiresAt('')
                       }}
                       className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
                     >
@@ -596,9 +631,9 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
                   <div className="text-sm text-gray-600">
                     <p className="font-medium mb-2">CSVファイル形式:</p>
                     <pre className="bg-gray-100 p-2 rounded text-xs">
-                      gift_code,gift_code_amount{'\n'}
-                      GIFT-ABC-12345,500{'\n'}
-                      GIFT-DEF-67890,1000
+                      値,ギフト券番号,シリアル番号{'\n'}
+                      ¥5,000,BRTW-YTFZQZ-CQCS,273-86867-12447-848{'\n'}
+                      ¥5,000,Y9DD-N2UF3F-WSC6,274-97844-02941-026
                     </pre>
                   </div>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">

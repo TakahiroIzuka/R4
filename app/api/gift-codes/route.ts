@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { code, gift_code_amount_id, expires_at } = body
+    const { code, gift_code_amount_id } = body
 
     if (!code || typeof code !== 'string' || !code.trim()) {
       return NextResponse.json({ error: 'コードを入力してください' }, { status: 400 })
@@ -96,12 +96,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'このコードは既に登録されています' }, { status: 400 })
     }
 
+    // created_atから10年後のexpires_atを計算
+    const now = new Date()
+    const expiresAt = new Date(now)
+    expiresAt.setFullYear(expiresAt.getFullYear() + 10)
+
     const { data, error } = await supabase
       .from('gift_codes')
       .insert({
         code: code.trim(),
         gift_code_amount_id: parseInt(gift_code_amount_id),
-        expires_at: expires_at || null
+        expires_at: expiresAt.toISOString().split('T')[0]
       })
       .select(`
         *,

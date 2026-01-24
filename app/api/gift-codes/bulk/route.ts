@@ -28,7 +28,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { rows } = body // Expected format: [{ code: string, amount: number }, ...]
+    // Expected format: [{ amount: string, code: string, serial_number: string }, ...]
+    // amount は「¥5,000」のような形式
+    const { rows } = body
 
     if (!rows || !Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json({ error: 'データがありません' }, { status: 400 })
@@ -57,17 +59,26 @@ export async function POST(request: NextRequest) {
       errors: []
     }
 
-    const codesToInsert: { code: string; gift_code_amount_id: number }[] = []
+    // created_atから10年後のexpires_atを計算
+    const now = new Date()
+    const expiresAt = new Date(now)
+    expiresAt.setFullYear(expiresAt.getFullYear() + 10)
+    const expiresAtStr = expiresAt.toISOString().split('T')[0]
+
+    const codesToInsert: { code: string; gift_code_amount_id: number; expires_at: string; serial_number: string | null }[] = []
     const processedCodes = new Set<string>()
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       const rowNumber = i + 2 // 1-indexed, skip header
       const code = String(row.code || '').trim()
-      const amount = parseInt(String(row.amount || ''))
+      const serialNumber = String(row.serial_number || '').trim() || null
+      // 金額から円記号とカンマを除去してパース（例: ¥5,000 → 5000, ￥5000 → 5000）
+      const amountStr = String(row.amount || '').replace(/[¥￥\\,]/g, '').trim()
+      const amount = parseInt(amountStr)
 
       if (!code) {
-        result.errors.push({ row: rowNumber, code: '-', message: 'コードが空です' })
+        result.errors.push({ row: rowNumber, code: '-', message: 'ギフト券番号が空です' })
         continue
       }
 
@@ -96,7 +107,7 @@ export async function POST(request: NextRequest) {
       }
 
       processedCodes.add(code)
-      codesToInsert.push({ code, gift_code_amount_id: amountId })
+      codesToInsert.push({ code, gift_code_amount_id: amountId, expires_at: expiresAtStr, serial_number: serialNumber })
     }
 
     // Bulk insert valid codes
