@@ -16,6 +16,9 @@ interface GiftCode {
   expires_at: string | null
   created_at: string
   updated_at: string
+  serial_number: string | null
+  sent_email: string | null
+  sent_at: string | null
   gift_code_amounts: GiftCodeAmount
 }
 
@@ -31,12 +34,13 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
     giftCodeAmounts.length > 0 ? giftCodeAmounts[0].id : null
   )
 
-  // Edit state
-  const [editingId, setEditingId] = useState<number | null>(null)
+  // Edit modal state
+  const [editingItem, setEditingItem] = useState<GiftCode | null>(null)
   const [editCode, setEditCode] = useState('')
   const [editAmountId, setEditAmountId] = useState<number | null>(null)
   const [editUsed, setEditUsed] = useState(false)
   const [editExpiresAt, setEditExpiresAt] = useState('')
+  const [editSerialNumber, setEditSerialNumber] = useState('')
 
   // Add state
   const [isAdding, setIsAdding] = useState(false)
@@ -73,19 +77,21 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
   const unusedCount = totalCount - usedCount
 
   const handleEdit = (item: GiftCode) => {
-    setEditingId(item.id)
+    setEditingItem(item)
     setEditCode(item.code)
     setEditAmountId(item.gift_code_amount_id)
     setEditUsed(item.used)
     setEditExpiresAt(item.expires_at || '')
+    setEditSerialNumber(item.serial_number || '')
   }
 
   const handleCancelEdit = () => {
-    setEditingId(null)
+    setEditingItem(null)
     setEditCode('')
     setEditAmountId(null)
     setEditUsed(false)
     setEditExpiresAt('')
+    setEditSerialNumber('')
   }
 
   const handleSaveEdit = async () => {
@@ -94,17 +100,20 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
       return
     }
 
+    if (!editingItem) return
+
     setIsUpdating(true)
 
     try {
-      const response = await fetch(`/api/gift-codes/${editingId}`, {
+      const response = await fetch(`/api/gift-codes/${editingItem.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: editCode.trim(),
           gift_code_amount_id: editAmountId,
           used: editUsed,
-          expires_at: editExpiresAt || null
+          expires_at: editExpiresAt || null,
+          serial_number: editSerialNumber.trim() || null
         })
       })
 
@@ -457,112 +466,46 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
                       key={item.id}
                       className={item.used ? 'bg-gray-100' : 'hover:bg-gray-50'}
                     >
-                      {editingId === item.id ? (
-                        <>
-                          <td className="px-4 py-3 text-left">
-                            <button
-                              onClick={handleSaveEdit}
-                              disabled={isUpdating}
-                              className="text-blue-600 hover:text-blue-900 text-sm font-medium disabled:opacity-50"
-                            >
-                              保存
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {item.id}
-                          </td>
-                          <td className="px-4 py-3">
-                            <input
-                              type="text"
-                              value={editCode}
-                              onChange={(e) => setEditCode(e.target.value)}
-                              className="w-40 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={editAmountId || ''}
-                              onChange={(e) => setEditAmountId(parseInt(e.target.value))}
-                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              {giftCodeAmounts.map((amount) => (
-                                <option key={amount.id} value={amount.id}>
-                                  {formatAmount(amount.amount)}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="px-4 py-3">
-                            <input
-                              type="date"
-                              value={editExpiresAt}
-                              onChange={(e) => setEditExpiresAt(e.target.value)}
-                              className="w-32 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={editUsed ? 'used' : 'unused'}
-                              onChange={(e) => setEditUsed(e.target.value === 'used')}
-                              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="unused">未使用</option>
-                              <option value="used">使用済み</option>
-                            </select>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={handleCancelEdit}
-                              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
-                            >
-                              キャンセル
-                            </button>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-4 py-3 text-left">
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="text-blue-600 hover:text-blue-900 text-sm font-medium"
-                            >
-                              編集
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {item.id}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900 font-mono">
-                            {item.code}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
-                            {formatAmount(item.gift_code_amounts.amount)}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-500">
-                            {item.expires_at || '-'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                                item.used
-                                  ? 'bg-gray-200 text-gray-600'
-                                  : 'bg-green-100 text-green-800'
-                              }`}
-                            >
-                              {item.used ? '使用済み' : '未使用'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <button
-                              onClick={() => handleDelete(item.id, item.code)}
-                              disabled={isUpdating}
-                              className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
-                            >
-                              削除
-                            </button>
-                          </td>
-                        </>
-                      )}
+                      <td className="px-4 py-3 text-left">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                        >
+                          編集
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {item.id}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 font-mono">
+                        {item.code}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {formatAmount(item.gift_code_amounts.amount)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">
+                        {item.expires_at || '-'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
+                            item.used
+                              ? 'bg-gray-200 text-gray-600'
+                              : 'bg-green-100 text-green-800'
+                          }`}
+                        >
+                          {item.used ? '使用済み' : '未使用'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDelete(item.id, item.code)}
+                          disabled={isUpdating}
+                          className="text-red-600 hover:text-red-900 text-sm font-medium disabled:opacity-50"
+                        >
+                          削除
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {filteredCodes.length === 0 && (
@@ -660,6 +603,130 @@ export default function GiftCodesList({ giftCodes, giftCodeAmounts }: GiftCodesL
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">ギフトコード編集</h3>
+              <button
+                onClick={handleCancelEdit}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                <p className="text-sm text-gray-900">{editingItem.id}</p>
+              </div>
+
+              {/* コード */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ギフト券番号 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editCode}
+                  onChange={(e) => setEditCode(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* シリアルナンバー */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  シリアル番号
+                </label>
+                <input
+                  type="text"
+                  value={editSerialNumber}
+                  onChange={(e) => setEditSerialNumber(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 金額 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  金額 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={editAmountId || ''}
+                  onChange={(e) => setEditAmountId(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {giftCodeAmounts.map((amount) => (
+                    <option key={amount.id} value={amount.id}>
+                      {formatAmount(amount.amount)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 有効期限 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">有効期限</label>
+                <input
+                  type="date"
+                  value={editExpiresAt}
+                  onChange={(e) => setEditExpiresAt(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 使用状態 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">使用状態</label>
+                <select
+                  value={editUsed ? 'used' : 'unused'}
+                  onChange={(e) => setEditUsed(e.target.value === 'used')}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="unused">未使用</option>
+                  <option value="used">使用済み</option>
+                </select>
+              </div>
+
+              {/* 送信先メールアドレス（表示のみ） */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">送信先メールアドレス</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                  {editingItem.sent_email || '-'}
+                </p>
+              </div>
+
+              {/* 送信日時（表示のみ） */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">送信日時</label>
+                <p className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                  {editingItem.sent_at ? new Date(editingItem.sent_at).toLocaleString('ja-JP') : '-'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <button
+                onClick={handleCancelEdit}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                {isUpdating ? '保存中...' : '保存'}
+              </button>
             </div>
           </div>
         </div>

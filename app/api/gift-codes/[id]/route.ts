@@ -27,13 +27,14 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { code, gift_code_amount_id, used, expires_at } = body
+    const { code, gift_code_amount_id, used, expires_at, serial_number } = body
 
     const updateData: {
       code?: string
       gift_code_amount_id?: number
       used?: boolean
       expires_at?: string | null
+      serial_number?: string | null
     } = {}
 
     if (code !== undefined) {
@@ -66,6 +67,10 @@ export async function PUT(
 
     if (expires_at !== undefined) {
       updateData.expires_at = expires_at || null
+    }
+
+    if (serial_number !== undefined) {
+      updateData.serial_number = serial_number || null
     }
 
     const { data, error } = await supabase
