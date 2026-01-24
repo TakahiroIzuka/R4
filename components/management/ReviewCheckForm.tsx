@@ -1,8 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 interface Service {
   id: number
@@ -30,6 +28,7 @@ interface ReviewCheckData {
   review_star?: number
   is_approved?: boolean
   is_giftcode_sent?: boolean
+  feedback?: string | null
 }
 
 // 投稿確認ステータスの選択肢
@@ -85,10 +84,9 @@ export default function ReviewCheckForm({
   tasks
 }: ReviewCheckFormProps) {
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Get initial service_id from facility if editing, or from defaultServiceId
-  const getInitialServiceId = () => {
+  // Get service_id from facility
+  const getServiceId = () => {
     if (initialData?.facility_id) {
       const facility = facilities.find(f => f.id === initialData.facility_id)
       return facility?.service_id || services[0]?.id || ''
@@ -99,157 +97,63 @@ export default function ReviewCheckForm({
     return services[0]?.id || ''
   }
 
-  // Form fields
-  const [serviceId] = useState<number | string>(getInitialServiceId())
-  const [facilityId, setFacilityId] = useState(initialData?.facility_id || '')
-  const [reviewerName, setReviewerName] = useState(initialData?.reviewer_name || '')
-  const [googleAccountName, setGoogleAccountName] = useState(initialData?.google_account_name || '')
-  const [email, setEmail] = useState(initialData?.email || '')
-  const [reviewUrl, setReviewUrl] = useState(initialData?.review_url || '')
-  const [reviewStar, setReviewStar] = useState(initialData?.review_star || '')
-  const [isApproved, setIsApproved] = useState(initialData?.is_approved || false)
-  const [isGiftcodeSent, setIsGiftcodeSent] = useState(initialData?.is_giftcode_sent || false)
-  const [confirmationStatus, setConfirmationStatus] = useState<ConfirmationStatusValue>(
-    getConfirmationStatusFromTasks(tasks)
-  )
+  const serviceId = getServiceId()
+  const confirmationStatus = getConfirmationStatusFromTasks(tasks)
 
-  // Filter facilities by selected service
-  const filteredFacilities = facilities.filter(f => f.service_id === Number(serviceId))
+  // 施設名を取得
+  const getFacilityName = () => {
+    const facility = facilities.find(f => f.id === initialData?.facility_id)
+    return facility?.detail?.[0]?.name || `施設ID: ${initialData?.facility_id}`
+  }
 
-  // Reset facility selection when service changes
-  useEffect(() => {
-    if (serviceId && facilityId) {
-      const selectedFacility = facilities.find(f => f.id === Number(facilityId))
-      if (selectedFacility && selectedFacility.service_id !== Number(serviceId)) {
-        setFacilityId('')
-      }
-    }
-  }, [serviceId, facilityId, facilities])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    try {
-      const supabase = createClient()
-
-      const reviewData = {
-        facility_id: parseInt(String(facilityId)),
-        reviewer_name: reviewerName || null,
-        google_account_name: googleAccountName || null,
-        email: email || null,
-        review_url: reviewUrl || null,
-        review_star: reviewStar ? parseFloat(String(reviewStar)) : null,
-        is_approved: isApproved,
-        is_giftcode_sent: isGiftcodeSent
-      }
-
-      if (initialData?.id) {
-        // Update existing
-        const { error } = await supabase
-          .from('review_checks')
-          .update(reviewData)
-          .eq('id', initialData.id)
-
-        if (error) throw error
-
-        // Update tasks status if tasks exist
-        if (tasks && tasks.length > 0) {
-          const { error: tasksError } = await supabase
-            .from('review_check_tasks')
-            .update({ status: confirmationStatus })
-            .eq('review_check_id', initialData.id)
-
-          if (tasksError) {
-            console.error('Error updating tasks:', tasksError)
-          }
-        }
-
-        alert('クチコミを更新しました')
-      } else {
-        // Insert new
-        const { error } = await supabase
-          .from('review_checks')
-          .insert(reviewData)
-
-        if (error) throw error
-        alert('クチコミを登録しました')
-      }
-
-      router.push(`/management/reviews?service=${serviceId}`)
-      router.refresh()
-    } catch (error) {
-      console.error('Error saving review check:', error)
-      alert('保存に失敗しました')
-    } finally {
-      setIsSubmitting(false)
-    }
+  // 投稿確認ステータスのラベルを取得
+  const getConfirmationStatusLabel = () => {
+    const option = CONFIRMATION_STATUS_OPTIONS.find(o => o.value === confirmationStatus)
+    return option?.label || '-'
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded shadow border border-gray-200 p-6 max-w-2xl">
+    <div className="bg-white rounded shadow border border-gray-200 p-6 max-w-2xl">
       <div className="space-y-6">
-        {/* Facility Selection */}
+        {/* Facility */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            施設 <span className="text-red-500">*</span>
+            施設
           </label>
-          <select
-            required
-            value={facilityId}
-            onChange={(e) => setFacilityId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">選択してください</option>
-            {filteredFacilities.map((facility) => (
-              <option key={facility.id} value={facility.id}>
-                {facility.detail?.[0]?.name || `施設ID: ${facility.id}`}
-              </option>
-            ))}
-          </select>
+          <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+            {getFacilityName()}
+          </div>
         </div>
 
         {/* Reviewer Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              投稿者名 <span className="text-red-500">*</span>
+              投稿者名
             </label>
-            <input
-              type="text"
-              required
-              value={reviewerName}
-              onChange={(e) => setReviewerName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+              {initialData?.reviewer_name || '-'}
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Googleアカウント名 <span className="text-red-500">*</span>
+              Googleアカウント名
             </label>
-            <input
-              type="text"
-              required
-              value={googleAccountName}
-              onChange={(e) => setGoogleAccountName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+              {initialData?.google_account_name || '-'}
+            </div>
           </div>
         </div>
 
         {/* Contact Info */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            メールアドレス <span className="text-red-500">*</span>
+            メールアドレス
           </label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+            {initialData?.email || '-'}
+          </div>
         </div>
 
         {/* Review Info */}
@@ -258,102 +162,82 @@ export default function ReviewCheckForm({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               レビューURL
             </label>
-            <input
-              type="url"
-              value={reviewUrl}
-              onChange={(e) => setReviewUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700 break-all">
+              {initialData?.review_url ? (
+                <a href={initialData.review_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  {initialData.review_url}
+                </a>
+              ) : '-'}
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               評価（星）
             </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              value={reviewStar}
-              onChange={(e) => setReviewStar(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+              {initialData?.review_star || '-'}
+            </div>
           </div>
         </div>
 
-        {/* Confirmation Status (edit only) */}
+        {/* Feedback */}
+        {initialData?.feedback && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              ご意見・ご感想
+            </label>
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+              {initialData.feedback}
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Status */}
         {initialData?.id && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               投稿確認
             </label>
-            <select
-              value={confirmationStatus}
-              onChange={(e) => setConfirmationStatus(e.target.value as ConfirmationStatusValue)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {CONFIRMATION_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {(!tasks || tasks.length === 0) && (
-              <p className="mt-1 text-xs text-gray-500">
-                ※ タスクが未作成のため、保存しても反映されません
-              </p>
-            )}
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+              {getConfirmationStatusLabel()}
+            </div>
           </div>
         )}
 
-        {/* Status Checkboxes */}
+        {/* Status */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             ステータス
           </label>
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={isApproved}
-                onChange={(e) => setIsApproved(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">承認済み</span>
-            </label>
-
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={isGiftcodeSent}
-                onChange={(e) => setIsGiftcodeSent(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">ギフトコード送付済み</span>
-            </label>
+          <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
+            <div className="flex flex-wrap gap-2">
+              {initialData?.is_approved && (
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                  承認済み
+                </span>
+              )}
+              {initialData?.is_giftcode_sent && (
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+                  ギフトコード送付済み
+                </span>
+              )}
+              {!initialData?.is_approved && !initialData?.is_giftcode_sent && '-'}
+            </div>
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Back Button */}
         <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-2 bg-[#2271b1] text-white rounded text-sm hover:bg-[#135e96] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {isSubmitting ? '保存中...' : (initialData?.id ? '更新' : '登録')}
-          </button>
           <button
             type="button"
             onClick={() => router.push(`/management/reviews?service=${serviceId}`)}
             className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors font-medium"
           >
-            キャンセル
+            戻る
           </button>
         </div>
       </div>
-    </form>
+    </div>
   )
 }

@@ -43,7 +43,7 @@ export default async function EditReviewPage({ params }: EditReviewPageProps) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">クチコミを編集</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">クチコミ詳細</h1>
       <ReviewCheckForm
         services={services || []}
         facilities={facilities || []}

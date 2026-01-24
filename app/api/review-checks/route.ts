@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    const { facility_id, reviewer_name, google_account_name, email, review_star } = body
+    const { facility_id, reviewer_name, google_account_name, email, review_star, feedback } = body
 
     // バリデーション
     if (!facility_id || !reviewer_name || !google_account_name || !email || !review_star) {
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
         google_account_name,
         email,
         review_star,
+        feedback: feedback || null,
         status: 'pending',
       })
       .select()

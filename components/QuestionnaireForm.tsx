@@ -67,6 +67,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           google_account_name: formData.googleAccountName,
           email: formData.email,
           review_star: Number(formData.satisfaction),
+          feedback: formData.feedback || null,
         }),
       })
 

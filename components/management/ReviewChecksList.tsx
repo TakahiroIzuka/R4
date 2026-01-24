@@ -204,7 +204,7 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">編集</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">詳細</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">ID</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">施設名</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">投稿者名</th>
@@ -226,7 +226,7 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
                         href={`/management/reviews/${review.id}/edit`}
                         className="text-[#2271b1] hover:text-[#135e96] font-medium"
                       >
-                        編集
+                        詳細
                       </Link>
                     </td>
                     <td className="px-4 py-3">{review.id}</td>
