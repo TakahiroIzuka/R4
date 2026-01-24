@@ -26,7 +26,8 @@ interface ReviewCheckData {
   email?: string
   review_url?: string
   review_star?: number
-  is_approved?: boolean
+  is_owner_approved?: boolean
+  is_admin_approved?: boolean
   is_giftcode_sent?: boolean
   feedback?: string | null
 }
@@ -212,9 +213,14 @@ export default function ReviewCheckForm({
           </label>
           <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
             <div className="flex flex-wrap gap-2">
-              {initialData?.is_approved && (
+              {initialData?.is_owner_approved && (
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
-                  承認済み
+                  施設承認済み
+                </span>
+              )}
+              {initialData?.is_admin_approved && (
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                  管理者承認済み
                 </span>
               )}
               {initialData?.is_giftcode_sent && (
@@ -222,7 +228,7 @@ export default function ReviewCheckForm({
                   ギフトコード送付済み
                 </span>
               )}
-              {!initialData?.is_approved && !initialData?.is_giftcode_sent && '-'}
+              {!initialData?.is_owner_approved && !initialData?.is_admin_approved && !initialData?.is_giftcode_sent && '-'}
             </div>
           </div>
         </div>

@@ -75,7 +75,7 @@ export async function POST(
     // トークン検証とレコード取得
     const { data: reviewCheck, error: reviewCheckError } = await supabase
       .from('review_checks')
-      .select('facility_approval_token, admin_approval_token, reviewer_name, email, google_account_name, facility_id, is_approved, review_url')
+      .select('facility_approval_token, admin_approval_token, reviewer_name, email, google_account_name, facility_id, is_owner_approved, review_url')
       .eq('id', reviewCheckId)
       .single()
 
@@ -88,7 +88,7 @@ export async function POST(
     }
 
     // 既に承認済みの場合はスキップ
-    if (reviewCheck.is_approved) {
+    if (reviewCheck.is_owner_approved) {
       return new NextResponse(
         `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>承認済み</title>
@@ -112,10 +112,10 @@ export async function POST(
       return NextResponse.json({ error: '施設情報が見つかりません' }, { status: 404 })
     }
 
-    // review_checks.is_approved を true に更新
+    // review_checks.is_owner_approved を true に更新
     const { error: updateError } = await supabase
       .from('review_checks')
-      .update({ is_approved: true })
+      .update({ is_owner_approved: true })
       .eq('id', reviewCheckId)
 
     if (updateError) {

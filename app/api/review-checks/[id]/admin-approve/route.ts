@@ -197,6 +197,7 @@ export async function POST(
     const { error: updateError } = await supabase
       .from('review_checks')
       .update({
+        is_admin_approved: true,
         is_giftcode_sent: giftCodeStatus === 'sent',
         gift_code_status: giftCodeStatus,
         status: 'completed'

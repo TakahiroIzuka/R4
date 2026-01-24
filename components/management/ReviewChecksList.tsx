@@ -23,7 +23,8 @@ interface ReviewCheckData {
   email: string | null
   review_url: string | null
   review_star: number | null
-  is_approved: boolean
+  is_owner_approved: boolean
+  is_admin_approved: boolean
   is_giftcode_sent: boolean
   gift_code_status?: string | null
   created_at: string
@@ -213,6 +214,7 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
                   <th className="px-4 py-3 text-left font-medium text-gray-700">評価</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">投稿確認</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">施設承認</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">管理者承認</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">コード送信</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">登録日</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-700">削除</th>
@@ -251,9 +253,16 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        review.is_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        review.is_owner_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {review.is_approved ? '承認済み' : '未承認'}
+                        {review.is_owner_approved ? '承認済み' : '未承認'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        review.is_admin_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {review.is_admin_approved ? '承認済み' : '未承認'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

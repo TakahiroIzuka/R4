@@ -27,7 +27,9 @@ export interface ReviewCheck {
   review_url: string | null
   review_star: number | null
   status: ReviewCheckStatus
-  is_approved: boolean
+  is_review_posted: boolean
+  is_owner_approved: boolean
+  is_admin_approved: boolean
   is_giftcode_sent: boolean
   facility_approval_token: string
   admin_approval_token: string
