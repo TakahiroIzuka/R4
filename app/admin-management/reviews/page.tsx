@@ -14,12 +14,14 @@ export default async function ReviewsPage() {
     .eq('auth_user_id', authUser?.id)
     .single()
 
-  // Fetch services and review_checks with facility info
+  // Fetch services, facilities, and review_checks with facility info
   const [
     { data: services },
+    { data: facilities },
     { data: reviewChecks, error }
   ] = await Promise.all([
     supabase.from('services').select('*').order('id'),
+    supabase.from('facilities').select('id, service_id, company_id'),
     supabase
       .from('review_checks')
       .select(`
@@ -47,7 +49,10 @@ export default async function ReviewsPage() {
       <ReviewChecksList
         services={services || []}
         reviewChecks={reviewChecks || []}
-        showNewButton={currentUser?.type === 'admin'}
+        facilities={facilities || []}
+        currentUserType="admin"
+        currentUserCompanyId={null}
+        showNewButton={true}
       />
     </div>
   )

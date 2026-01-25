@@ -58,9 +58,18 @@ function getGiftCodeStatusDisplay(status: string | null | undefined, isGiftcodeS
   }
 }
 
+interface FacilityData {
+  id: number
+  service_id: number
+  company_id: number | null
+}
+
 interface ReviewChecksListProps {
   services: ServiceData[]
   reviewChecks: ReviewCheckData[]
+  facilities: FacilityData[]
+  currentUserType: 'admin' | 'user'
+  currentUserCompanyId: number | null
   showNewButton?: boolean
 }
 
@@ -91,15 +100,22 @@ function getConfirmationStatus(tasks?: ReviewCheckTaskData[]): { label: string; 
   return { label: '確認中', color: 'bg-yellow-100 text-yellow-800' }
 }
 
-export default function ReviewChecksList({ services, reviewChecks, showNewButton = false }: ReviewChecksListProps) {
+export default function ReviewChecksList({ services, reviewChecks, facilities, currentUserType, currentUserCompanyId, showNewButton = false }: ReviewChecksListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Get service ID from URL or use first service
+  // Filter services based on user type (same as FacilitiesList)
+  const visibleServices = currentUserType === 'user'
+    ? services.filter(service =>
+        facilities.some(f => f.service_id === service.id && f.company_id === currentUserCompanyId)
+      )
+    : services
+
+  // Get service ID from URL or use first visible service
   const serviceIdFromUrl = searchParams.get('service')
   const initialServiceId = serviceIdFromUrl
     ? parseInt(serviceIdFromUrl)
-    : services[0]?.id || 1
+    : visibleServices[0]?.id || 1
 
   const [selectedServiceId, setSelectedServiceId] = useState<number>(initialServiceId)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -108,18 +124,18 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
   useEffect(() => {
     if (serviceIdFromUrl) {
       const parsedId = parseInt(serviceIdFromUrl)
-      if (services.some(s => s.id === parsedId)) {
+      if (visibleServices.some(s => s.id === parsedId)) {
         setSelectedServiceId(parsedId)
       }
     }
-  }, [serviceIdFromUrl, services])
+  }, [serviceIdFromUrl, visibleServices])
 
-  // Update selectedServiceId when services changes
+  // Update selectedServiceId when visibleServices changes
   useEffect(() => {
-    if (services.length > 0 && !services.some(s => s.id === selectedServiceId)) {
-      setSelectedServiceId(services[0]?.id || 1)
+    if (!visibleServices.some(s => s.id === selectedServiceId)) {
+      setSelectedServiceId(visibleServices[0]?.id || 1)
     }
-  }, [services, selectedServiceId])
+  }, [visibleServices, selectedServiceId])
 
   const handleServiceChange = (serviceId: number) => {
     setSelectedServiceId(serviceId)
@@ -168,7 +184,7 @@ export default function ReviewChecksList({ services, reviewChecks, showNewButton
       {/* Service Tabs */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
         <div className="flex border-b border-gray-200 overflow-x-auto">
-          {services.map((service) => (
+          {visibleServices.map((service) => (
             <button
               key={service.id}
               onClick={() => handleServiceChange(service.id)}
