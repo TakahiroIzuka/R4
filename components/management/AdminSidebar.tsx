@@ -10,9 +10,24 @@ interface AdminSidebarProps {
 }
 
 const getMenuItems = (userType: 'admin' | 'user', basePath: string) => {
-  const items = [
+  // user用は「施設一覧」「クチコミ一覧」のみ
+  if (userType === 'user') {
+    return [
+      {
+        label: '施設一覧',
+        href: `${basePath}/facilities`,
+      },
+      {
+        label: 'クチコミ一覧',
+        href: `${basePath}/reviews`,
+      },
+    ]
+  }
+
+  // admin用のメニュー
+  return [
     {
-      label: userType === 'user' ? '会社管理' : '会社一覧',
+      label: '会社一覧',
       href: `${basePath}/companies`,
     },
     {
@@ -27,17 +42,11 @@ const getMenuItems = (userType: 'admin' | 'user', basePath: string) => {
       label: 'クチコミ一覧',
       href: `${basePath}/reviews`,
     },
-  ]
-
-  // 管理者のみギフトコード一覧を表示
-  if (userType === 'admin') {
-    items.push({
+    {
       label: 'ギフトコード一覧',
       href: basePath,
-    })
-  }
-
-  return items
+    },
+  ]
 }
 
 const getMasterItems = (basePath: string) => [
