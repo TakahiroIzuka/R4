@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail, getAdminEmails, formatStarRating } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,15 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient()
+
+    // 施設情報を取得（メール送信用）
+    const { data: facilityData } = await supabase
+      .from('facility_details')
+      .select('name')
+      .eq('id', facility_id)
+      .single()
+
+    const facilityName = facilityData?.name || '施設'
 
     // review_checksにレコードを登録（status: 'pending'で登録、トークンは自動生成）
     const { data, error } = await supabase
@@ -65,6 +75,65 @@ export async function POST(request: NextRequest) {
       // タスク作成に失敗した場合でも、review_checkは作成されているのでエラーは返さない
       // ただしログは残す
     }
+
+    // メール送信（非同期で実行し、失敗してもアンケート登録は成功とする）
+    const sendNotificationEmails = async () => {
+      try {
+        // 1. 管理者通知メール
+        const adminEmails = getAdminEmails()
+        if (adminEmails.length > 0) {
+          const adminEmailBody = `${facilityName} に新しいアンケート回答がありました。
+
+■ 回答内容
+━━━━━━━━━━━━━━━━━━━━━━━━
+評価: ${formatStarRating(review_star)}
+お名前: ${reviewer_name}様
+メールアドレス: ${email}
+Googleアカウント名: ${google_account_name}
+${feedback ? `
+ご意見・ご感想:
+${feedback}` : ''}
+
+■ 次のステップ
+この回答に対するクチコミ確認は、自動的に処理されます。
+確認結果は別途メールでお知らせします。
+`
+
+          await sendEmail({
+            to: adminEmails,
+            subject: `【新規アンケート回答】${facilityName}`,
+            body: adminEmailBody,
+          })
+        }
+
+        // 2. アンケート送信者へのThank youメール
+        const thankYouEmailBody = `${reviewer_name}様
+
+この度は${facilityName}のアンケートにご回答いただき、
+誠にありがとうございます。
+
+お客様からいただいた貴重なご意見は、
+今後のサービス向上に役立たせていただきます。
+
+クチコミの確認が完了しましたら、
+改めてご連絡させていただきます。
+
+今後とも${facilityName}をよろしくお願いいたします。
+`
+
+        await sendEmail({
+          to: email,
+          subject: `アンケートへのご回答ありがとうございます - ${facilityName}`,
+          body: thankYouEmailBody,
+        })
+      } catch (emailError) {
+        console.error('Error sending notification emails:', emailError)
+        // メール送信エラーは無視し、アンケート登録は成功とする
+      }
+    }
+
+    // メール送信を非同期で実行（レスポンスをブロックしない）
+    sendNotificationEmails()
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
