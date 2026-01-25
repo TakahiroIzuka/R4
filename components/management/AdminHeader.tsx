@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SERVICE_CODES } from '@/lib/constants/services'
+import { SERVICE_CODES, ServiceCode } from '@/lib/constants/services'
 
 const SERVICES = [
   { code: SERVICE_CODES.MEDICAL, name: 'メディカル', path: '/medical' },
@@ -11,7 +11,11 @@ const SERVICES = [
   { code: SERVICE_CODES.VACATION_STAY, name: '宿泊施設', path: '/vacation-stay' },
 ]
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+  visibleServiceCodes?: ServiceCode[]
+}
+
+export default function AdminHeader({ visibleServiceCodes }: AdminHeaderProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -133,7 +137,9 @@ export default function AdminHeader() {
               </button>
             </div>
             <div className="space-y-2">
-              {SERVICES.map((service) => (
+              {SERVICES
+                .filter(service => !visibleServiceCodes || visibleServiceCodes.includes(service.code))
+                .map((service) => (
                 <a
                   key={service.code}
                   href={service.path}
@@ -160,6 +166,9 @@ export default function AdminHeader() {
                   </svg>
                 </a>
               ))}
+              {visibleServiceCodes && visibleServiceCodes.length === 0 && (
+                <p className="text-center text-gray-500 py-4">表示可能なサイトがありません</p>
+              )}
             </div>
           </div>
         </div>
