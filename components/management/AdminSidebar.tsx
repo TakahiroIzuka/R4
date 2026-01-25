@@ -6,25 +6,26 @@ import { useState } from 'react'
 
 interface AdminSidebarProps {
   currentUserType: 'admin' | 'user'
+  basePath?: '/management' | '/admin-management'
 }
 
-const getMenuItems = (userType: 'admin' | 'user') => {
+const getMenuItems = (userType: 'admin' | 'user', basePath: string) => {
   const items = [
     {
       label: userType === 'user' ? '会社管理' : '会社一覧',
-      href: '/management/companies',
+      href: `${basePath}/companies`,
     },
     {
       label: 'ユーザー一覧',
-      href: '/management/users',
+      href: `${basePath}/users`,
     },
     {
       label: '施設一覧',
-      href: '/management/facilities',
+      href: `${basePath}/facilities`,
     },
     {
       label: 'クチコミ一覧',
-      href: '/management/reviews',
+      href: `${basePath}/reviews`,
     },
   ]
 
@@ -32,46 +33,47 @@ const getMenuItems = (userType: 'admin' | 'user') => {
   if (userType === 'admin') {
     items.push({
       label: 'ギフトコード一覧',
-      href: '/management',
+      href: basePath,
     })
   }
 
   return items
 }
 
-const masterItems = [
+const getMasterItems = (basePath: string) => [
   {
     label: 'サービス',
-    href: '/management/masters/services',
+    href: `${basePath}/masters/services`,
   },
   {
     label: 'ジャンル',
-    href: '/management/masters/genres',
+    href: `${basePath}/masters/genres`,
   },
   {
     label: '都道府県・地域',
-    href: '/management/masters/regions',
+    href: `${basePath}/masters/regions`,
   },
   {
     label: 'ギフトコード額',
-    href: '/management/masters/gift-code-amounts',
+    href: `${basePath}/masters/gift-code-amounts`,
   },
 ]
 
-export default function AdminSidebar({ currentUserType }: AdminSidebarProps) {
+export default function AdminSidebar({ currentUserType, basePath = '/management' }: AdminSidebarProps) {
   const pathname = usePathname()
-  const [isMasterExpanded, setIsMasterExpanded] = useState(pathname.startsWith('/management/masters'))
-  const menuItems = getMenuItems(currentUserType)
+  const [isMasterExpanded, setIsMasterExpanded] = useState(pathname.startsWith(`${basePath}/masters`))
+  const menuItems = getMenuItems(currentUserType, basePath)
+  const masterItems = getMasterItems(basePath)
 
   const isActive = (href: string) => {
-    // /management は完全一致でチェック（他のサブパスと区別するため）
-    if (href === '/management') {
-      return pathname === '/management'
+    // basePath は完全一致でチェック（他のサブパスと区別するため）
+    if (href === basePath) {
+      return pathname === basePath
     }
     return pathname.startsWith(href)
   }
 
-  const isMasterActive = pathname.startsWith('/management/masters')
+  const isMasterActive = pathname.startsWith(`${basePath}/masters`)
 
   return (
     <aside className="w-64 bg-[#1e1e1e] text-white min-h-screen fixed left-0 top-0 border-r border-[#2d2d2d]">

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import AdminSidebar from '@/components/management/AdminSidebar'
 import AdminHeader from '@/components/management/AdminHeader'
 
-export default async function AdminLayout({
+export default async function AdminManagementLayout({
   children,
 }: {
   children: React.ReactNode
@@ -24,14 +24,14 @@ export default async function AdminLayout({
     .eq('auth_user_id', user?.id)
     .single()
 
-  // Only allow 'user' type to access this management area
-  if (currentUser?.type === 'admin') {
-    redirect('/admin-management')
+  // Only allow 'admin' type to access this management area
+  if (currentUser?.type !== 'admin') {
+    redirect('/management')
   }
 
   return (
     <div className="flex min-h-screen bg-[#f0f0f1]">
-      <AdminSidebar currentUserType="user" basePath="/management" />
+      <AdminSidebar currentUserType="admin" basePath="/admin-management" />
       <div className="flex-1 ml-64">
         <AdminHeader />
         <main className="p-6">

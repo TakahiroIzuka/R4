@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 
 // Routes that require authentication
-const PROTECTED_ROUTES = ['/management'];
+const PROTECTED_ROUTES = ['/management', '/admin-management'];
 
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_ROUTES.some(route =>
