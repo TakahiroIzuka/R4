@@ -11,13 +11,18 @@ interface QuestionnaireFormProps {
   genreColor: string
   serviceCode: string
   googleReviewUrl?: string
-  genreCode?: string
+  giftCodeAmount?: number
 }
 
-export default function QuestionnaireForm({ facilityId, facilityName, genreColor, serviceCode, googleReviewUrl, genreCode }: QuestionnaireFormProps) {
+export default function QuestionnaireForm({ facilityId, facilityName, genreColor, serviceCode, googleReviewUrl, giftCodeAmount }: QuestionnaireFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [useDefaultImage, setUseDefaultImage] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  // インセンティブ画像のパス（ギフトコード額がある場合のみ表示）
+  const incentiveImagePath = giftCodeAmount
+    ? `/${serviceCode}/incentive/incentive-${giftCodeAmount}.png`
+    : null
   const [formData, setFormData] = useState({
     satisfaction: '',
     hasGoogleAccount: '',
@@ -252,20 +257,19 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
                   <span className="font-bold text-base leading-none" style={{ color: 'rgb(10, 108, 255)', transform: 'translate(0.5px, -1px)' }}>›</span>
                 </span>
               </a>
-              {/* インセンティブ画像 */}
-              <div className="mt-3">
-                <Image
-                  src={useDefaultImage
-                    ? `/${serviceCode}/default/info-incentive.png`
-                    : `/${serviceCode}/${genreCode || 'default'}/info-incentive.png`
-                  }
-                  alt="特典情報"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto"
-                  onError={() => setUseDefaultImage(true)}
-                />
-              </div>
+              {/* インセンティブ画像（ギフトコード額がある場合のみ表示） */}
+              {incentiveImagePath && !imageError && (
+                <div className="mt-3">
+                  <Image
+                    src={incentiveImagePath}
+                    alt="特典情報"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto"
+                    onError={() => setImageError(true)}
+                  />
+                </div>
+              )}
               <p className="text-sm text-gray-400 mt-2">
                 ※ Googleクチコミ投稿後は、こちらの画面にお戻りいただき、残りの情報を入力、送信を完了させてください。該当するクチコミの本人照合の確認をさせていただいた上で、特典をプレゼント致します。
               </p>

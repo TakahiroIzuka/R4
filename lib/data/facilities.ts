@@ -173,6 +173,10 @@ const FACILITY_DETAIL_QUERY = `
     name,
     code
   ),
+  gift_code_amount:gift_code_amounts(
+    id,
+    amount
+  ),
   detail:facility_details!facility_id(
     name,
     star,

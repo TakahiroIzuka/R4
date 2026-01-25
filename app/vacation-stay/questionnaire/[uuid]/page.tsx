@@ -40,7 +40,7 @@ export default async function QuestionnairePage({ params }: QuestionnairePagePro
             genreColor={genreColor}
             serviceCode={SERVICE_CODE}
             googleReviewUrl={facility.google_map_url}
-            genreCode={genreCode}
+            giftCodeAmount={facility.gift_code_amount?.amount}
           />
         </div>
       </main>

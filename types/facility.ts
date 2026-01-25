@@ -19,6 +19,11 @@ export interface Facility {
   address?: string
   tel?: string
   google_map_url?: string
+  // Gift code
+  gift_code_amount?: {
+    id: number
+    amount: number
+  } | null
   // Related entities
   prefecture?: {
     id: number
