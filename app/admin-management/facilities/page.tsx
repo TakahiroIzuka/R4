@@ -4,16 +4,6 @@ import FacilitiesList from '@/components/management/FacilitiesList'
 export default async function FacilitiesPage() {
   const supabase = await createClient()
 
-  // Get current logged-in user
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
-  // Fetch current user's data from users table
-  const { data: currentUser } = await supabase
-    .from('users')
-    .select('*')
-    .eq('auth_user_id', authUser?.id)
-    .single()
-
   const [
     { data: services },
     { data: facilities, error }
@@ -45,9 +35,9 @@ export default async function FacilitiesPage() {
       <FacilitiesList
         services={services || []}
         facilities={facilities || []}
-        currentUserType={currentUser?.type || 'user'}
-        currentUserCompanyId={currentUser?.company_id || null}
-        showNewButton={currentUser?.type === 'admin'}
+        currentUserType="admin"
+        currentUserCompanyId={null}
+        showNewButton={true}
       />
     </div>
   )

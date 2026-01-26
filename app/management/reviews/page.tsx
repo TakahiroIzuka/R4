@@ -43,7 +43,7 @@ export default async function ReviewsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">クチコミ管理</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">クチコミ一覧</h1>
       </div>
 
       <ReviewChecksList
