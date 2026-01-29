@@ -1,4 +1,4 @@
-import { createClient, createAnonClient } from '@/utils/supabase/server'
+import { createAnonClient } from '@/utils/supabase/server'
 import type { Facility } from '@/types/facility'
 
 interface FacilityImageWithUrls {
@@ -105,7 +105,7 @@ export async function fetchAllFacilities(serviceCode: string): Promise<{ facilit
     return { facilities: [], error: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: facilitiesData, error } = await supabase
     .from('facilities')
     .select(FACILITY_BASE_QUERY)
@@ -130,7 +130,7 @@ export async function fetchFacilitiesByGenre(genreId: string, serviceCode: strin
     return { facilities: [], error: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: facilitiesData, error } = await supabase
     .from('facilities')
     .select(FACILITY_BASE_QUERY)
@@ -204,7 +204,7 @@ export async function fetchFacilityById(id: string, serviceCode: string) {
     return { facility: null, error: new Error('Service not found') }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: facilityData, error } = await supabase
     .from('facilities')
     .select(FACILITY_DETAIL_QUERY)
@@ -250,7 +250,7 @@ export async function fetchFacilityByUuid(uuid: string, serviceCode: string) {
  * Fetch genre by ID
  */
 export async function fetchGenreById(id: string) {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: genre, error } = await supabase
     .from('genres')
@@ -265,7 +265,7 @@ export async function fetchGenreById(id: string) {
  * Fetch prefecture by ID
  */
 export async function fetchPrefectureById(id: string) {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: prefecture, error } = await supabase
     .from('prefectures')
@@ -280,7 +280,7 @@ export async function fetchPrefectureById(id: string) {
  * Fetch area by ID (includes prefecture info)
  */
 export async function fetchAreaById(id: string) {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: area, error } = await supabase
     .from('areas')
@@ -301,7 +301,7 @@ export async function fetchFacilitiesByPrefecture(prefectureId: string, serviceC
     return { facilities: [], error: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: facilitiesData, error } = await supabase
     .from('facilities')
     .select(FACILITY_BASE_QUERY)
@@ -327,7 +327,7 @@ export async function fetchFacilitiesByArea(areaId: string, serviceCode: string)
     return { facilities: [], error: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: facilitiesData, error } = await supabase
     .from('facilities')
     .select(FACILITY_BASE_QUERY)
@@ -448,7 +448,7 @@ export async function fetchAreasWithFacilities(serviceCode: string) {
  * Returns images sorted by display_order (1-5)
  */
 export async function fetchFacilityImages(facilityId: number) {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: images, error } = await supabase
     .from('facility_images')
@@ -482,7 +482,7 @@ export async function fetchFacilityImages(facilityId: number) {
  * Returns the logo image URL or null if not found
  */
 export async function fetchFacilityLogo(facilityId: number) {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: logo, error } = await supabase
     .from('facility_images')
@@ -509,7 +509,7 @@ export async function fetchFacilitiesImages(facilityIds: number[]) {
     return { imagesMap: {}, error: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const { data: images, error } = await supabase
     .from('facility_images')
