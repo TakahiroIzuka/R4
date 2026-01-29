@@ -38,8 +38,9 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Redirect to management companies page after successful login
-      router.push("/management/companies");
+      // Redirect to management page after successful login
+      // Layout will handle redirecting admin users to /admin-management
+      router.push("/management");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
