@@ -52,29 +52,75 @@ INSERT INTO companies (id, code, name) VALUES
   (4, 'ito_construction', '株式会社伊藤建設'),
   (5, 'seiei_corporation', '株式会社清栄コーポレーション');
 
--- Seed facilities table
-INSERT INTO facilities (id, genre_id, prefecture_id, area_id, company_id, uuid, service_id) VALUES
-  (1, 5, 8, 2, 1, '251dbcf3-1f07-3b9a-f66c-54f339f41f62', 1),
-  (2, 5, 5, 1, 1, '97ad8f2a-f580-3426-6edf-5c4b2d630aa8', 1),
-  (3, 5, 9, 6, 1, '2341607c-6889-170b-ba19-a9453d753dd9', 1),
-  (4, 1, 9, 8, 2, '3462159b-aabf-edb1-a2b2-44366d637f5c', 1),
-  (5, 1, 9, 8, 2, '0fa9580f-c2b5-1ba6-f859-893fbee8633a', 1),
-  (6, 1, 9, 9, 2, '978813da-874b-8a97-9ed1-527bde7359d1', 1),
-  (7, 2, 5, 1, 3, '0511baf3-69d4-5719-ddb4-7ddacd3d2676', 1),
-  (8, 10, 11, NULL, 4, '03132990-a519-4774-a8d3-bb844a04057e', 2),
-  (9, 6, 1, NULL, 5, '39273fe5-5908-49a3-9d68-e1a0d3418771', 2);
+-- Seed facilities and facility_details table
+-- Note: id and uuid are auto-generated
+DO $$
+DECLARE
+  facility_id INTEGER;
+BEGIN
+  -- Facility 1: DAILY SKIN CLINIC 名古屋院
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 1, 5, 8, 2, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'DAILY SKIN CLINIC 名古屋院', 4, 102, NULL, 'https://dailyskinclinic.jp', '450-0002', '愛知県名古屋市中村区名駅4-26-9', '052-123-4567', 35.21513224384904, 136.90848145863572, NULL, NULL, NULL, NULL, NULL);
 
--- Seed facility_details table
-INSERT INTO facility_details (facility_id, name, star, user_review_count, lat, lng, site_url, postal_code, address, tel) VALUES
-  (1, 'DAILY SKIN CLINIC 名古屋院', 4, 102, 35.21513224384904, 136.90848145863572, 'https://dailyskinclinic.jp', '450-0002', '愛知県名古屋市中村区名駅4-26-9', '052-123-4567'),
-  (2, 'DAILY SKIN CLINIC 心斎橋院', 4.7, 548, 34.675872736516, 135.49841414232787, 'https://dailyskinclinic.jp', '542-0086', '大阪府大阪市中央区西心斎橋1-5-5', '06-1234-5678'),
-  (3, 'DAILY SKIN CLINIC 新宿院', 4.5, 197, 35.69130895971996, 139.7036116918168, 'https://dailyskinclinic.jp', '160-0022', '東京都新宿区新宿3-1-16', '03-1234-5678'),
-  (4, 'STUDIO IVY 広尾ANNEX店', NULL, 0, 35.64839035285032, 139.7176866205972, 'https://www.pilates-ivy.jp', '150-0012', '東京都渋谷区広尾5-16-3', '03-2345-6789'),
-  (5, 'STUDIO IVY 恵比寿店', 5, 5, 35.64570669164102, 139.70429115767035, 'https://www.pilates-ivy.jp', '150-0013', '東京都渋谷区恵比寿1-20-8', '03-3456-7890'),
-  (6, 'STUDIO IVY 赤坂ANNEX店', 4.7, 3, 35.670664250365526, 139.7346120644181, 'https://www.pilates-ivy.jp', '107-0052', '東京都港区赤坂4-2-6', '03-4567-8901'),
-  (7, '西梅田シティクリニック', 3.3, 253, 34.69959423473339, 135.4954401355819, 'https://nishiumeda.city-clinic.jp', '530-0001', '大阪府大阪市北区梅田2-5-25', '06-2345-6789'),
-  (8, '伊藤建設', 4.8, 21, 35.341983436514866, 139.48383143989673, 'https://itokensetsu.com', '251-0052', '神奈川県藤沢市藤沢1015-23', '0466512322'),
-  (9, '清栄コーポレーション', 3.5, 16, 35.0133426, 135.7567308, 'https://www.seiei-1997.co.jp', '604-0847', '京都市中京区烏丸通二条下ル秋野々町514番\n清栄ビル京都烏丸2階', '0120170161');
+  -- Facility 2: DAILY SKIN CLINIC 心斎橋院
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 1, 5, 5, 1, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'DAILY SKIN CLINIC 心斎橋院', 4.7, 548, NULL, 'https://dailyskinclinic.jp', '542-0086', '大阪府大阪市中央区西心斎橋1-5-5', '06-1234-5678', 34.675872736516, 135.49841414232787, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 3: DAILY SKIN CLINIC 新宿院
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 1, 5, 9, 6, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'DAILY SKIN CLINIC 新宿院', 4.5, 197, NULL, 'https://dailyskinclinic.jp', '160-0022', '東京都新宿区新宿3-1-16', '03-1234-5678', 35.69130895971996, 139.7036116918168, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 4: STUDIO IVY 広尾ANNEX店
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 2, 1, 9, 8, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'STUDIO IVY 広尾ANNEX店', NULL, 0, NULL, 'https://www.pilates-ivy.jp', '150-0012', '東京都渋谷区広尾5-16-3', '03-2345-6789', 35.64839035285032, 139.7176866205972, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 5: STUDIO IVY 恵比寿店
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 2, 1, 9, 8, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'STUDIO IVY 恵比寿店', 5, 5, NULL, 'https://www.pilates-ivy.jp', '150-0013', '東京都渋谷区恵比寿1-20-8', '03-3456-7890', 35.64570669164102, 139.70429115767035, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 6: STUDIO IVY 赤坂ANNEX店
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 2, 1, 9, 9, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, 'STUDIO IVY 赤坂ANNEX店', 4.7, 3, NULL, 'https://www.pilates-ivy.jp', '107-0052', '東京都港区赤坂4-2-6', '03-4567-8901', 35.670664250365526, 139.7346120644181, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 7: 西梅田シティクリニック
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (1, 3, 2, 5, 1, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, '西梅田シティクリニック', 3.3, 253, NULL, 'https://nishiumeda.city-clinic.jp', '530-0001', '大阪府大阪市北区梅田2-5-25', '06-2345-6789', 34.69959423473339, 135.4954401355819, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 8: 伊藤建設
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (2, 4, 10, 11, NULL, gen_random_uuid(), 1)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, '伊藤建設', 4.8, 21, NULL, 'https://itokensetsu.com', '251-0052', '神奈川県藤沢市藤沢1015-23', '0466512322', 35.341983436514866, 139.48383143989673, NULL, NULL, NULL, NULL, NULL);
+
+  -- Facility 9: 清栄コーポレーション
+  INSERT INTO facilities (service_id, company_id, genre_id, prefecture_id, area_id, uuid, gift_code_amount_id)
+  VALUES (2, 5, 6, 1, NULL, gen_random_uuid(), NULL)
+  RETURNING id INTO facility_id;
+  INSERT INTO facility_details (facility_id, name, star, user_review_count, google_map_url, site_url, postal_code, address, tel, lat, lng, review_approval_email, portfolio_url, event_url, youtube_url, google_place_id)
+  VALUES (facility_id, '清栄コーポレーション', 3.5, 16, NULL, 'https://www.seiei-1997.co.jp', '604-0847', E'京都市中京区烏丸通二条下ル秋野々町514番\n清栄ビル京都烏丸2階', '0120170161', 35.0133426, 135.7567308, NULL, NULL, NULL, NULL, NULL);
+END $$;
 
 -- Seed users table with Supabase Auth integration
 -- Note: All passwords are 'pass1234'
