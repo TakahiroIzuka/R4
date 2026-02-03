@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import * as XLSX from 'xlsx'
 
@@ -63,7 +63,11 @@ export default function MasterManager({
 }: MasterManagerProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const activeTab = masterType
+
+  // Determine base path from current pathname
+  const basePath = pathname.startsWith('/admin-management') ? '/admin-management' : '/management'
 
   // Get service ID from URL or use first service
   const serviceIdFromUrl = searchParams.get('service')
@@ -88,7 +92,7 @@ export default function MasterManager({
     setSelectedServiceId(serviceId)
     setEditingId(null)
     setIsAdding(false)
-    router.push(`/management/masters/genres?service=${serviceId}`, { scroll: false })
+    router.push(`${basePath}/masters/genres?service=${serviceId}`, { scroll: false })
   }
 
   // Edit state

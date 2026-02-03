@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import DeleteFacilityButton from './DeleteFacilityButton'
 
 interface ServiceData {
@@ -32,6 +32,10 @@ interface FacilitiesListProps {
 export default function FacilitiesList({ services, facilities, currentUserType, currentUserCompanyId, showNewButton = false }: FacilitiesListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  // Determine base path from current pathname
+  const basePath = pathname.startsWith('/admin-management') ? '/admin-management' : '/management'
 
   // Filter services based on user type
   const visibleServices = currentUserType === 'user'
@@ -67,7 +71,7 @@ export default function FacilitiesList({ services, facilities, currentUserType, 
 
   const handleServiceChange = (serviceId: number) => {
     setSelectedServiceId(serviceId)
-    router.push(`/management/facilities?service=${serviceId}`, { scroll: false })
+    router.push(`${basePath}/facilities?service=${serviceId}`, { scroll: false })
   }
 
   const filteredFacilities = facilities
@@ -109,7 +113,7 @@ export default function FacilitiesList({ services, facilities, currentUserType, 
           </h2>
           {showNewButton && (
             <Link
-              href={`/management/facilities/new?service=${selectedServiceId}`}
+              href={`${basePath}/facilities/new?service=${selectedServiceId}`}
               className="px-4 py-2 bg-[#2271b1] text-white rounded text-sm hover:bg-[#135e96] transition-colors font-medium"
             >
               新規追加
@@ -152,7 +156,7 @@ export default function FacilitiesList({ services, facilities, currentUserType, 
                 <tr key={facility.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     <Link
-                      href={`/management/facilities/${facility.id}/edit`}
+                      href={`${basePath}/facilities/${facility.id}/edit`}
                       className="text-[#2271b1] hover:text-[#135e96] font-medium"
                     >
                       編集

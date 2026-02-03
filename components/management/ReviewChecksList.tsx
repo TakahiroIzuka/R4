@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 interface ServiceData {
@@ -103,6 +103,10 @@ function getConfirmationStatus(tasks?: ReviewCheckTaskData[]): { label: string; 
 export default function ReviewChecksList({ services, reviewChecks, facilities, currentUserType, currentUserCompanyId, showNewButton = false }: ReviewChecksListProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  // Determine base path from current pathname
+  const basePath = pathname.startsWith('/admin-management') ? '/admin-management' : '/management'
 
   // Filter services based on user type (same as FacilitiesList)
   const visibleServices = currentUserType === 'user'
@@ -139,7 +143,7 @@ export default function ReviewChecksList({ services, reviewChecks, facilities, c
 
   const handleServiceChange = (serviceId: number) => {
     setSelectedServiceId(serviceId)
-    router.push(`/management/reviews?service=${serviceId}`, { scroll: false })
+    router.push(`${basePath}/reviews?service=${serviceId}`, { scroll: false })
   }
 
   const filteredReviewChecks = reviewChecks.filter(r => r.facility?.service_id === selectedServiceId)
@@ -208,7 +212,7 @@ export default function ReviewChecksList({ services, reviewChecks, facilities, c
           </h2>
           {showNewButton && (
             <Link
-              href={`/management/reviews/new?serviceId=${selectedServiceId}`}
+              href={`${basePath}/reviews/new?serviceId=${selectedServiceId}`}
               className="px-4 py-2 bg-[#2271b1] text-white rounded text-sm hover:bg-[#135e96] transition-colors font-medium"
             >
               新規登録
@@ -241,7 +245,7 @@ export default function ReviewChecksList({ services, reviewChecks, facilities, c
                   <tr key={review.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <Link
-                        href={`/management/reviews/${review.id}/edit`}
+                        href={`${basePath}/reviews/${review.id}/edit`}
                         className="text-[#2271b1] hover:text-[#135e96] font-medium"
                       >
                         詳細
