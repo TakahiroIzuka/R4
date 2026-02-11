@@ -10,7 +10,8 @@ async function sendAdminApprovalRequestEmail(
   googleAccountName: string,
   facilityName: string,
   facilityUrl: string | null,
-  reviewUrl: string | null
+  reviewUrl: string | null,
+  serviceId: number
 ): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -38,6 +39,7 @@ async function sendAdminApprovalRequestEmail(
           facilityName,
           facilityUrl,
           reviewUrl,
+          serviceId,
         }),
       }
     )
@@ -72,10 +74,20 @@ export async function POST(
 
     const supabase = await createClient()
 
-    // トークン検証とレコード取得
+    // トークン検証とレコード取得（施設のservice_idも含む）
     const { data: reviewCheck, error: reviewCheckError } = await supabase
       .from('review_checks')
-      .select('facility_approval_token, admin_approval_token, reviewer_name, email, google_account_name, facility_id, is_owner_approved, review_url')
+      .select(`
+        facility_approval_token,
+        admin_approval_token,
+        reviewer_name,
+        email,
+        google_account_name,
+        facility_id,
+        is_owner_approved,
+        review_url,
+        facility:facilities!facility_id(service_id)
+      `)
       .eq('id', reviewCheckId)
       .single()
 
@@ -123,6 +135,17 @@ export async function POST(
       return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 })
     }
 
+    // service_idを取得（facilityは配列の可能性もあるため両対応）
+    const facility = Array.isArray(reviewCheck.facility)
+      ? reviewCheck.facility[0]
+      : reviewCheck.facility
+    const serviceId = facility?.service_id
+
+    if (!serviceId) {
+      console.error('Service ID not found for facility')
+      return NextResponse.json({ error: '施設のサービス情報が見つかりません' }, { status: 404 })
+    }
+
     // 管理者へ承認依頼メールを送信（Edge Function経由）
     const emailSent = await sendAdminApprovalRequestEmail(
       parseInt(reviewCheckId),
@@ -132,7 +155,8 @@ export async function POST(
       reviewCheck.google_account_name,
       facilityDetail.name,
       facilityDetail.google_map_url,
-      reviewCheck.review_url
+      reviewCheck.review_url,
+      serviceId
     )
 
     if (!emailSent) {

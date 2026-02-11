@@ -114,7 +114,8 @@ serve(async (req) => {
       googleAccountName,
       facilityName,
       facilityUrl,
-      reviewUrl
+      reviewUrl,
+      serviceId
     } = await req.json()
 
     // 環境変数からADMIN_EMAILSを取得
@@ -130,12 +131,12 @@ serve(async (req) => {
     }
 
     const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
-    const approvalUrl = `${baseUrl}/api/review-checks/${reviewCheckId}/admin-approve?token=${adminApprovalToken}`
+    const reviewDetailUrl = `${baseUrl}/admin-management/reviews/${reviewCheckId}/edit`
 
     const body = `管理者様
 
 施設オーナーによるクチコミ承認が完了しました。
-以下のリンクから最終承認をお願いします。
+以下のリンクからクチコミ詳細にアクセスして、最終承認をお願いします。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 お名前: ${reviewerName} 様
@@ -147,11 +148,10 @@ Googleアカウント名: ${googleAccountName}
 施設承認: 完了
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-▼ 承認する場合は以下のリンクをクリックしてください
-${approvalUrl}
+▼ 管理画面のクチコミ詳細はこちら
+${reviewDetailUrl}
 
 ※このメールは自動送信されています。
-※このリンクは本メールの受信者専用です。第三者への共有はお控えください。
 `
 
     // 全ての管理者にメール送信
