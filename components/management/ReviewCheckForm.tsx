@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 interface Service {
   id: number
@@ -75,6 +76,7 @@ interface ReviewCheckFormProps {
   initialData?: ReviewCheckData
   defaultServiceId?: number
   tasks?: ReviewCheckTaskData[]
+  showAdminApprove?: boolean
 }
 
 export default function ReviewCheckForm({
@@ -82,9 +84,15 @@ export default function ReviewCheckForm({
   facilities,
   initialData,
   defaultServiceId,
-  tasks
+  tasks,
+  showAdminApprove = false
 }: ReviewCheckFormProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const [isApproving, setIsApproving] = useState(false)
+
+  // Determine base path from current pathname
+  const basePath = pathname.startsWith('/admin-management') ? '/admin-management' : '/management'
 
   // Get service_id from facility
   const getServiceId = () => {
@@ -107,11 +115,86 @@ export default function ReviewCheckForm({
     return facility?.detail?.[0]?.name || `施設ID: ${initialData?.facility_id}`
   }
 
-  // 投稿確認ステータスのラベルを取得
-  const getConfirmationStatusLabel = () => {
+  // 投稿確認ステータスの表示内容を取得
+  const getConfirmationStatusDisplay = () => {
+    const colorMap: Record<ConfirmationStatusValue, string> = {
+      confirmed: 'bg-green-100 text-green-800',
+      already_confirmed: 'bg-blue-100 text-blue-800',
+      failed: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+    }
+
     const option = CONFIRMATION_STATUS_OPTIONS.find(o => o.value === confirmationStatus)
-    return option?.label || '-'
+    const label = option?.label || '-'
+    const colorClass = colorMap[confirmationStatus] || 'bg-gray-100 text-gray-800'
+
+    return { label, colorClass }
   }
+
+  // 管理者承認処理
+  const handleAdminApprove = async () => {
+    if (!initialData?.id) return
+
+    const isResend = initialData?.is_admin_approved
+    const confirmMessage = isResend
+      ? 'ギフトコードを再送信しますか？'
+      : '管理者承認を実行しますか？\nギフトコードが送信されます。'
+
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    setIsApproving(true)
+    try {
+      const response = await fetch(`/api/review-checks/${initialData.id}/admin-approve`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || '処理に失敗しました')
+      }
+
+      const result = await response.json()
+      const successMessage = isResend ? 'ギフトコードを再送信しました' : '管理者承認が完了しました'
+
+      if (result.warnings && result.warnings.length > 0) {
+        alert(`${successMessage}\n\n注意:\n${result.warnings.join('\n')}`)
+      } else {
+        alert(successMessage)
+      }
+
+      router.refresh()
+    } catch (error) {
+      console.error('Error approving review check:', error)
+      alert(error instanceof Error ? error.message : '処理に失敗しました')
+    } finally {
+      setIsApproving(false)
+    }
+  }
+
+  // 管理者承認ボタン（コード送信ボタン）の表示判定
+  // - 施設承認済み
+  // - ギフトコード送信済みではない
+  const isGiftCodeSent = initialData?.is_giftcode_sent === true
+  const canAdminApprove = showAdminApprove &&
+    initialData?.is_owner_approved === true &&
+    !isGiftCodeSent
+
+  // ボタンのラベルを決定（管理者承認済みの場合は「ギフトコード再送信」）
+  const approveButtonLabel = initialData?.is_admin_approved ? 'ギフトコード再送信' : '管理者承認'
+
+  // 投稿確認ステータスの表示テキスト
+  const { label, colorClass } = getConfirmationStatusDisplay()
+  let confirmationDisplayText: string
+  if (confirmationStatus === 'confirmed') {
+    confirmationDisplayText = '投稿確認済'
+  } else if (confirmationStatus === 'pending') {
+    confirmationDisplayText = '投稿確認中'
+  } else {
+    confirmationDisplayText = `投稿確認: ${label}`
+  }
+  const confirmationColorClass = colorClass
 
   return (
     <div className="bg-white rounded shadow border border-gray-200 p-6 max-w-2xl">
@@ -194,18 +277,6 @@ export default function ReviewCheckForm({
           </div>
         )}
 
-        {/* Confirmation Status */}
-        {initialData?.id && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              投稿確認
-            </label>
-            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
-              {getConfirmationStatusLabel()}
-            </div>
-          </div>
-        )}
-
         {/* Status */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -213,32 +284,51 @@ export default function ReviewCheckForm({
           </label>
           <div className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700">
             <div className="flex flex-wrap gap-2">
+              {initialData?.id && (
+                <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${confirmationColorClass}`}>
+                  {confirmationDisplayText}
+                </span>
+              )}
               {initialData?.is_owner_approved && (
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
-                  施設承認済み
+                  施設承認済
                 </span>
               )}
               {initialData?.is_admin_approved && (
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
-                  管理者承認済み
+                  管理者承認済
                 </span>
               )}
               {initialData?.is_giftcode_sent && (
-                <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
-                  ギフトコード送付済み
+                <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">
+                  ギフトコード送信済み
                 </span>
               )}
-              {!initialData?.is_owner_approved && !initialData?.is_admin_approved && !initialData?.is_giftcode_sent && '-'}
+              {!initialData?.id && !initialData?.is_owner_approved && !initialData?.is_admin_approved && !initialData?.is_giftcode_sent && '-'}
             </div>
           </div>
         </div>
+
+        {/* Admin Approve Button */}
+        {canAdminApprove && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleAdminApprove}
+              disabled={isApproving}
+              className="px-6 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-block"
+            >
+              {isApproving ? '処理中...' : approveButtonLabel}
+            </button>
+          </div>
+        )}
 
         {/* Back Button */}
         <div className="flex gap-3 pt-4">
           <button
             type="button"
-            onClick={() => router.push(`/management/reviews?service=${serviceId}`)}
-            className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors font-medium"
+            onClick={() => router.push(`${basePath}/reviews?service=${serviceId}`)}
+            className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors font-medium inline-block"
           >
             戻る
           </button>

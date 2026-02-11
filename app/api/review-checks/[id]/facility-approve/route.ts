@@ -135,7 +135,8 @@ export async function POST(
       return NextResponse.json({ error: '更新に失敗しました' }, { status: 500 })
     }
 
-    // service_idを取得（facilityは配列の可能性もあるため両対応）
+    // service_idを取得
+    // Note: Supabaseのリレーション取得では配列として返される場合があるため配列チェックが必要
     const facility = Array.isArray(reviewCheck.facility)
       ? reviewCheck.facility[0]
       : reviewCheck.facility

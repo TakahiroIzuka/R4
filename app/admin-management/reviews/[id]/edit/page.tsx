@@ -49,6 +49,7 @@ export default async function EditReviewPage({ params }: EditReviewPageProps) {
         facilities={facilities || []}
         initialData={reviewCheck}
         tasks={tasks || []}
+        showAdminApprove={true}
       />
     </div>
   )

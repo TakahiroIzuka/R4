@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 export async function POST(
   request: NextRequest,
@@ -10,11 +10,36 @@ export async function POST(
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
 
-    if (!token) {
-      return NextResponse.json({ error: 'トークンが必要です' }, { status: 400 })
-    }
+    let supabase
 
-    const supabase = createAdminClient()
+    // tokenがない場合は認証チェック
+    if (!token) {
+      supabase = await createClient()
+
+      // 認証されたユーザーを取得
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      if (!authUser) {
+        return NextResponse.json({ error: '認証が必要です' }, { status: 401 })
+      }
+
+      // ユーザー情報を取得して管理者かチェック
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('type')
+        .eq('auth_user_id', authUser.id)
+        .single()
+
+      if (!currentUser || currentUser.type !== 'admin') {
+        return NextResponse.json({ error: '管理者権限が必要です' }, { status: 403 })
+      }
+
+      // 管理者の場合はAdminClientを使用
+      supabase = createAdminClient()
+    } else {
+      // tokenがある場合は従来通りAdminClientを使用
+      supabase = createAdminClient()
+    }
 
     // トークン検証とレコード取得（施設情報も含む）
     const { data: reviewCheck, error: reviewCheckError } = await supabase
@@ -34,21 +59,46 @@ export async function POST(
       return NextResponse.json({ error: 'レコードが見つかりません' }, { status: 404 })
     }
 
-    if (reviewCheck.admin_approval_token !== token) {
+    // tokenがある場合のみトークン検証
+    if (token && reviewCheck.admin_approval_token !== token) {
       return NextResponse.json({ error: '無効なトークンです' }, { status: 403 })
     }
 
-    // 既に承認済みの場合はスキップ
-    if (reviewCheck.is_giftcode_sent || reviewCheck.gift_code_status === 'sent') {
-      return new NextResponse(
-        `<!DOCTYPE html>
+    // 施設承認が完了していない場合はエラー
+    if (!reviewCheck.is_owner_approved) {
+      if (token) {
+        return new NextResponse(
+          `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>エラー</title>
+<style>p{font-size:22px}@media(min-width:768px){p{font-size:18px}}</style></head>
+<body style="font-family: sans-serif; margin: 0; padding: 12px;">
+<p style="margin: 0;">施設承認が完了していません。</p>
+</body></html>`,
+          { status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        )
+      } else {
+        return NextResponse.json({ error: '施設承認が完了していません' }, { status: 400 })
+      }
+    }
+
+    // 既にギフトコード送信済みの場合はスキップ
+    const isGiftCodeAlreadySent = reviewCheck.gift_code_status === 'sent' || reviewCheck.is_giftcode_sent
+    if (isGiftCodeAlreadySent) {
+      if (token) {
+        // tokenがある場合（メールリンク経由）はHTMLを返す
+        return new NextResponse(
+          `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>承認済み</title>
 <style>p{font-size:22px}@media(min-width:768px){p{font-size:18px}}</style></head>
 <body style="font-family: sans-serif; margin: 0; padding: 12px;">
 <p style="margin: 0;">既に承認済みです。</p>
 </body></html>`,
-        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-      )
+          { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        )
+      } else {
+        // tokenがない場合（管理画面経由）はJSONを返す
+        return NextResponse.json({ error: '既に承認済みです' }, { status: 400 })
+      }
     }
 
     const facility = reviewCheck.facility
@@ -209,25 +259,46 @@ export async function POST(
       // メール送信成功後なので、エラーを返さず成功扱いとする
     }
 
-    // レスポンスメッセージを作成
-    let resultMessage = '管理者承認が完了しました。'
-    if (giftCodeStatus === 'sent') {
-      resultMessage += '<br>ギフトコードを送信しました。'
-    } else if (giftCodeStatus === 'out_of_stock') {
-      resultMessage += '<br><span style="color: #dc2626;">ギフトコードの在庫がないため、送信できませんでした。</span>'
-    } else if (giftCodeStatus === 'not_configured') {
-      resultMessage += '<br><span style="color: #dc2626;">ギフトコード金額が未設定のため、送信できませんでした。</span>'
-    }
+    if (token) {
+      // tokenがある場合（メールリンク経由）はHTMLを返す
+      let resultMessage = '管理者承認が完了しました。'
+      if (giftCodeStatus === 'sent') {
+        resultMessage += '<br>ギフトコードを送信しました。'
+      } else if (giftCodeStatus === 'out_of_stock') {
+        resultMessage += '<br><span style="color: #dc2626;">ギフトコードの在庫がないため、送信できませんでした。</span>'
+      } else if (giftCodeStatus === 'not_configured') {
+        resultMessage += '<br><span style="color: #dc2626;">ギフトコード金額が未設定のため、送信できませんでした。</span>'
+      }
 
-    return new NextResponse(
-      `<!DOCTYPE html>
+      return new NextResponse(
+        `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>管理者承認完了</title>
 <style>p{font-size:22px}@media(min-width:768px){p{font-size:18px}}</style></head>
 <body style="font-family: sans-serif; margin: 0; padding: 12px;">
 <p style="margin: 0;">${resultMessage}</p>
 </body></html>`,
-      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    )
+        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+      )
+    } else {
+      // tokenがない場合（管理画面経由）はJSONを返す
+      let message = '管理者承認が完了しました。'
+      let warnings = []
+
+      if (giftCodeStatus === 'sent') {
+        message += 'ギフトコードを送信しました。'
+      } else if (giftCodeStatus === 'out_of_stock') {
+        warnings.push('ギフトコードの在庫がないため、送信できませんでした。')
+      } else if (giftCodeStatus === 'not_configured') {
+        warnings.push('ギフトコード金額が未設定のため、送信できませんでした。')
+      }
+
+      return NextResponse.json({
+        success: true,
+        message,
+        giftCodeStatus,
+        warnings: warnings.length > 0 ? warnings : undefined
+      })
+    }
   } catch (error) {
     console.error('Error in admin-approve API:', error)
     return NextResponse.json(

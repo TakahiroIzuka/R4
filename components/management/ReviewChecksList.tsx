@@ -81,9 +81,9 @@ function getConfirmationStatus(tasks?: ReviewCheckTaskData[]): { label: string; 
 
   const statuses = tasks.map(t => t.status)
 
-  // どちらかがconfirmedの場合 => 成功
+  // どちらかがconfirmedの場合 => 確認済
   if (statuses.some(s => s === 'confirmed')) {
-    return { label: '成功', color: 'bg-green-100 text-green-800' }
+    return { label: '確認済', color: 'bg-green-100 text-green-800' }
   }
 
   // 両方がalready_confirmedの場合 => 既出
@@ -235,7 +235,7 @@ export default function ReviewChecksList({ services, reviewChecks, facilities, c
                   <th className="px-4 py-3 text-left font-medium text-gray-700">投稿確認</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">施設承認</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">管理者承認</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-700">コード送信</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-700">ギフトコード送信</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-700">登録日</th>
                   <th className="px-4 py-3 text-right font-medium text-gray-700">削除</th>
                 </tr>
@@ -275,14 +275,14 @@ export default function ReviewChecksList({ services, reviewChecks, facilities, c
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                         review.is_owner_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {review.is_owner_approved ? '承認済み' : '未承認'}
+                        {review.is_owner_approved ? '承認済' : '未承認'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                         review.is_admin_approved ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {review.is_admin_approved ? '承認済み' : '未承認'}
+                        {review.is_admin_approved ? '承認済' : '未承認'}
                       </span>
                     </td>
                     <td className="px-4 py-3">

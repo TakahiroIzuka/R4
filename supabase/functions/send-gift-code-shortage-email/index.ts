@@ -153,6 +153,9 @@ serve(async (req) => {
     const facilityEditUrl = facilityId
       ? `${baseUrl}/management/facilities/${facilityId}/edit`
       : `${baseUrl}/management`
+    const reviewDetailUrl = reviewCheckId
+      ? `${baseUrl}/admin-management/reviews/${reviewCheckId}/edit`
+      : null
 
     if (isNotConfigured) {
       subject = `【要対応】ギフトコード金額未設定 - ${facilityName}`
@@ -168,7 +171,10 @@ serve(async (req) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 施設のギフトコード金額を設定後、以下のURLをクリックして再送信してください。
-
+${reviewDetailUrl ? `
+▼ クチコミ詳細画面
+${reviewDetailUrl}
+` : ''}
 ▼ 施設設定画面
 ${facilityEditUrl}
 ${resendUrl ? `
@@ -191,10 +197,10 @@ ${resendUrl}
 投稿者メール: ${reviewerEmail}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ギフトコードを追加登録後、以下のURLをクリックして再送信してください。
-${resendUrl ? `
-▼ ギフトコード再送信
-${resendUrl}
+ギフトコードを追加登録後、以下のクチコミ詳細画面から管理者承認を実行してください。
+${reviewDetailUrl ? `
+▼ クチコミ詳細画面
+${reviewDetailUrl}
 ` : `
 管理画面URL: ${baseUrl}/management
 `}`
