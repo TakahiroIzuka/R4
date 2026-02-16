@@ -76,13 +76,14 @@ export async function POST(request: NextRequest) {
       // ただしログは残す
     }
 
-    // メール送信（非同期で実行し、失敗してもアンケート登録は成功とする）
+    // メール送信（並列実行し、失敗してもアンケート登録は成功とする）
     const sendNotificationEmails = async () => {
-      try {
-        // 1. 管理者通知メール
-        const adminEmails = getAdminEmails()
-        if (adminEmails.length > 0) {
-          const adminEmailBody = `${facilityName} に新しいアンケート回答がありました。
+      const emailPromises = []
+
+      // 1. 管理者通知メール
+      const adminEmails = getAdminEmails()
+      if (adminEmails.length > 0) {
+        const adminEmailBody = `${facilityName} に新しいアンケート回答がありました。
 
 ■ 回答内容
 ━━━━━━━━━━━━━━━━━━━━━━━━
@@ -99,15 +100,19 @@ ${feedback}` : ''}
 確認結果は別途メールでお知らせします。
 `
 
-          await sendEmail({
+        emailPromises.push(
+          sendEmail({
             to: adminEmails,
             subject: `【新規アンケート回答】${facilityName}`,
             body: adminEmailBody,
+          }).catch(error => {
+            console.error('Error sending admin notification email:', error)
           })
-        }
+        )
+      }
 
-        // 2. アンケート送信者へのThank youメール
-        const thankYouEmailBody = `${reviewer_name}様
+      // 2. アンケート送信者へのThank youメール
+      const thankYouEmailBody = `${reviewer_name}様
 
 この度は${facilityName}のアンケートにご回答いただき、
 誠にありがとうございます。
@@ -121,19 +126,24 @@ ${feedback}` : ''}
 今後とも${facilityName}をよろしくお願いいたします。
 `
 
-        await sendEmail({
+      emailPromises.push(
+        sendEmail({
           to: email,
           subject: `アンケートへのご回答ありがとうございます - ${facilityName}`,
           body: thankYouEmailBody,
+        }).catch(error => {
+          console.error('Error sending thank you email:', error)
         })
-      } catch (emailError) {
-        console.error('Error sending notification emails:', emailError)
-        // メール送信エラーは無視し、アンケート登録は成功とする
-      }
+      )
+
+      // 全てのメール送信を並列実行
+      await Promise.all(emailPromises)
     }
 
-    // メール送信を非同期で実行（レスポンスをブロックしない）
-    sendNotificationEmails()
+    // メール送信を待つ（エラーは無視してアンケート登録は成功とする）
+    await sendNotificationEmails().catch(error => {
+      console.error('Error in sendNotificationEmails:', error)
+    })
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
