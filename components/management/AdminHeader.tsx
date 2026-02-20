@@ -3,13 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SERVICE_CODES, ServiceCode } from '@/lib/constants/services'
+import { ServiceCode } from '@/lib/constants/services'
 
-const SERVICES = [
-  { code: SERVICE_CODES.MEDICAL, name: 'メディカル', path: '/medical' },
-  { code: SERVICE_CODES.HOUSE_BUILDER, name: '住宅会社', path: '/house-builder' },
-  { code: SERVICE_CODES.VACATION_STAY, name: '宿泊施設', path: '/vacation-stay' },
-]
+interface Service {
+  code: string
+  name: string
+}
 
 interface AdminHeaderProps {
   visibleServiceCodes?: ServiceCode[]
@@ -19,7 +18,22 @@ export default function AdminHeader({ visibleServiceCodes }: AdminHeaderProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [services, setServices] = useState<Service[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('services')
+        .select('code, name')
+        .order('id')
+      if (data) {
+        setServices(data)
+      }
+    }
+    fetchServices()
+  }, [])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -137,12 +151,12 @@ export default function AdminHeader({ visibleServiceCodes }: AdminHeaderProps) {
               </button>
             </div>
             <div className="space-y-2">
-              {SERVICES
-                .filter(service => !visibleServiceCodes || visibleServiceCodes.includes(service.code))
+              {services
+                .filter(service => !visibleServiceCodes || visibleServiceCodes.includes(service.code as ServiceCode))
                 .map((service) => (
                 <a
                   key={service.code}
-                  href={service.path}
+                  href={`/${service.code}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
