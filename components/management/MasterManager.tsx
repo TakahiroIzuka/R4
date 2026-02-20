@@ -417,10 +417,10 @@ export default function MasterManager({
       const data = await file.arrayBuffer()
       const workbook = XLSX.read(data)
       const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: ['prefecture', 'area'], defval: '' })
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: ['prefecture', 'area', 'lat', 'lng'], defval: '' })
 
       // Skip header row if exists
-      const rows = jsonData.slice(1) as { prefecture: string; area: string }[]
+      const rows = jsonData.slice(1) as { prefecture: string; area: string; lat: string; lng: string }[]
 
       let addedPrefectures = 0
       let addedAreas = 0
@@ -431,6 +431,8 @@ export default function MasterManager({
       for (const row of rows) {
         let prefectureName = String(row.prefecture || '').trim()
         const areaName = String(row.area || '').trim()
+        const lat = parseFloat(String(row.lat || ''))
+        const lng = parseFloat(String(row.lng || ''))
 
         // If prefecture column is empty, use the last prefecture
         if (!prefectureName && currentPrefectureName) {
@@ -450,10 +452,17 @@ export default function MasterManager({
           currentPrefecture = existingPrefecture
 
           if (!currentPrefecture) {
+            // Validate coordinates for prefecture
+            if (isNaN(lat) || isNaN(lng)) {
+              console.error(`Invalid coordinates for prefecture ${prefectureName}: lat=${row.lat}, lng=${row.lng}`)
+              alert(`都道府県「${prefectureName}」の緯度経度が無効です。スキップします。`)
+              continue
+            }
+
             // Add new prefecture
             const { data: newPrefecture, error: prefError } = await supabase
               .from('prefectures')
-              .insert({ name: prefectureName })
+              .insert({ name: prefectureName, lat, lng })
               .select()
               .single()
 
@@ -469,6 +478,13 @@ export default function MasterManager({
 
         // Add area if provided and we have a current prefecture
         if (areaName && currentPrefecture) {
+          // Validate coordinates for area
+          if (isNaN(lat) || isNaN(lng)) {
+            console.error(`Invalid coordinates for area ${areaName}: lat=${row.lat}, lng=${row.lng}`)
+            alert(`地域「${areaName}」の緯度経度が無効です。スキップします。`)
+            continue
+          }
+
           // Check if area already exists for this prefecture in database
           const { data: existingArea } = await supabase
             .from('areas')
@@ -482,7 +498,9 @@ export default function MasterManager({
               .from('areas')
               .insert({
                 name: areaName,
-                prefecture_id: currentPrefecture.id
+                prefecture_id: currentPrefecture.id,
+                lat,
+                lng
               })
 
             if (areaError) {
