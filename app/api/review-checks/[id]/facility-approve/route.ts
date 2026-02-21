@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
 // 管理者承認依頼メール送信（Supabase Edge Function経由）
 async function sendAdminApprovalRequestEmail(
@@ -72,7 +72,7 @@ export async function POST(
       return NextResponse.json({ error: 'トークンが必要です' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // トークン検証とレコード取得（施設のservice_idも含む）
     const { data: reviewCheck, error: reviewCheckError } = await supabase
