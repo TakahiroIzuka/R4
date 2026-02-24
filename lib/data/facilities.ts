@@ -74,10 +74,12 @@ const FACILITY_BASE_QUERY = `
     id,
     name
   ),
-  genre:genres(
-    id,
-    name,
-    code
+  facility_genres(
+    genre:genres(
+      id,
+      name,
+      code
+    )
   ),
   detail:facility_details!facility_id(
     name,
@@ -131,10 +133,28 @@ export async function fetchFacilitiesByGenre(genreId: string, serviceCode: strin
   }
 
   const supabase = createAnonClient()
+
+  // Step 1: Get facility IDs that have this genre from junction table
+  const { data: facilityGenres, error: junctionError } = await supabase
+    .from('facility_genres')
+    .select('facility_id')
+    .eq('genre_id', genreId)
+
+  if (junctionError) {
+    return { facilities: null, error: junctionError }
+  }
+
+  if (!facilityGenres || facilityGenres.length === 0) {
+    return { facilities: [], error: null }
+  }
+
+  const facilityIds = facilityGenres.map(fg => fg.facility_id)
+
+  // Step 2: Get facilities with those IDs
   const { data: facilitiesData, error } = await supabase
     .from('facilities')
     .select(FACILITY_BASE_QUERY)
-    .eq('genre_id', genreId)
+    .in('id', facilityIds)
     .eq('service_id', serviceId)
     .order('id', { ascending: true })
 
@@ -168,10 +188,12 @@ const FACILITY_DETAIL_QUERY = `
     id,
     name
   ),
-  genre:genres(
-    id,
-    name,
-    code
+  facility_genres(
+    genre:genres(
+      id,
+      name,
+      code
+    )
   ),
   gift_code_amount:gift_code_amounts(
     id,

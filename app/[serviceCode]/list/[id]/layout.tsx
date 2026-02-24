@@ -18,9 +18,11 @@ export default async function DetailLayout({
   const { data: facility, error } = await supabase
     .from('facilities')
     .select(`
-      genre:genres(
-        name,
-        code
+      facility_genres(
+        genre:genres(
+          name,
+          code
+        )
       ),
       detail:facility_details!facility_id(
         name
@@ -33,7 +35,8 @@ export default async function DetailLayout({
     notFound()
   }
 
-  const genreData = facility.genre as { name?: string; code?: string } | null
+  const facilityGenres = facility.facility_genres as Array<{ genre: { name?: string; code?: string } }> | null
+  const genreData = facilityGenres && facilityGenres.length > 0 ? facilityGenres[0].genre : null
   const genreName = genreData?.name || ''
   const genreCode = genreData?.code
   const facilityName = Array.isArray(facility.detail)

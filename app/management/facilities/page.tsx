@@ -26,7 +26,7 @@ export default async function FacilitiesPage() {
         service:services(name),
         prefecture:prefectures(name),
         area:areas(name),
-        genre:genres(name),
+        facility_genres(genre:genres(name)),
         detail:facility_details!facility_id(name)
       `)
       .order('id', { ascending: false })
