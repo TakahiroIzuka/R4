@@ -391,7 +391,8 @@ export default function Header({
                 <span className="font-bold text-xl leading-none" style={{ transform: 'translate(0.5px, -2px)', color }}>›</span>
               </span>
             </button>
-            <button onClick={() => setIsAreaModalOpen(true)} className="text-white px-4 py-2.5 rounded-md font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group mb-2" style={{ backgroundColor: color }}>
+            {/* 各エリアから探すボタン - 一時的に非表示 */}
+            <button onClick={() => setIsAreaModalOpen(true)} className="hidden text-white px-4 py-2.5 rounded-md font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group mb-2" style={{ backgroundColor: color }}>
               <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200"></span>
               <span className="relative z-10">各エリアから探す</span>
               <span className="flex items-center justify-center w-5 h-5 bg-white rounded-full relative z-10" style={{ transform: 'translateY(0px)' }}>
@@ -472,7 +473,8 @@ export default function Header({
                     <span className="font-bold text-xl leading-none" style={{ transform: 'translate(0.5px, -2px)', color }}>›</span>
                   </span>
                 </button>
-                <button onClick={() => setIsAreaModalOpen(true)} className="text-white px-4 py-2.5 rounded-md font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group mb-2" style={{ backgroundColor: color }}>
+                {/* 各エリアから探すボタン - 一時的に非表示 */}
+                <button onClick={() => setIsAreaModalOpen(true)} className="hidden text-white px-4 py-2.5 rounded-md font-medium text-[15px] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group mb-2" style={{ backgroundColor: color }}>
                   <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-200"></span>
                   <span className="relative z-10">各エリアから探す</span>
                   <span className="flex items-center justify-center w-5 h-5 bg-white rounded-full relative z-10" style={{ transform: 'translateY(0px)' }}>
