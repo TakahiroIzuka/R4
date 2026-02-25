@@ -89,6 +89,7 @@ interface FacilityFormProps {
   prefectures: MasterData[]
   areas: MasterData[]
   companies: MasterData[]
+  services: MasterData[]
   giftCodeAmounts?: GiftCodeAmountData[]
   initialData?: InitialFacilityData
   currentUserType?: 'admin' | 'user'
@@ -102,6 +103,7 @@ export default function FacilityForm({
   prefectures,
   areas,
   companies,
+  services,
   giftCodeAmounts = [],
   initialData,
   currentUserType = 'admin',
@@ -695,6 +697,26 @@ export default function FacilityForm({
                   <p className="mt-1 text-xs text-gray-500">
                     この値は自動生成され、変更できません。アンケート画面を表示する場合はこの値を/サービス名/questionnaireの後に設定してください。
                   </p>
+                  {serviceId && (() => {
+                    const service = services.find(s => s.id === Number(serviceId))
+                    if (service?.code) {
+                      const questionnaireUrl = `/${service.code}/questionnaire/${initialData.uuid}`
+                      return (
+                        <a
+                          href={questionnaireUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          5段階評価アンケートページを開く
+                          <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      )
+                    }
+                    return null
+                  })()}
                 </div>
               )}
 

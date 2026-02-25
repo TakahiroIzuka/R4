@@ -73,12 +73,14 @@ export default async function EditFacilityPage({ params }: PageProps) {
     { data: prefectures },
     { data: areas },
     { data: companies },
+    { data: services },
     { data: giftCodeAmounts }
   ] = await Promise.all([
     supabase.from('genres').select('*, service_id').order('id'),
     supabase.from('prefectures').select('*').order('id'),
     supabase.from('areas').select('*, prefecture_id').order('id'),
     supabase.from('companies').select('*').order('id'),
+    supabase.from('services').select('id, name, code').order('id'),
     supabase.from('gift_code_amounts').select('id, amount').order('amount', { ascending: true })
   ])
 
@@ -90,6 +92,7 @@ export default async function EditFacilityPage({ params }: PageProps) {
         prefectures={prefectures || []}
         areas={areas || []}
         companies={companies || []}
+        services={services || []}
         giftCodeAmounts={giftCodeAmounts || []}
         initialData={facility}
         currentUserType="admin"
