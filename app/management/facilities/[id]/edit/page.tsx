@@ -27,6 +27,7 @@ export default async function EditFacilityPage({ params }: PageProps) {
     .from('facilities')
     .select(`
       *,
+      facility_genres(genre:genres(id, name, code)),
       detail:facility_details!facility_id(*)
     `)
     .eq('id', id)
@@ -34,6 +35,15 @@ export default async function EditFacilityPage({ params }: PageProps) {
 
   if (error || !facility) {
     notFound()
+  }
+
+  // Transform facility_genres array to genre_id
+  const facilityGenres = facility.facility_genres as Array<{ genre: { id: number; name: string; code: string } }> | undefined
+  const firstGenre = facilityGenres?.[0]?.genre
+  const facilityWithGenre = {
+    ...facility,
+    genre_id: firstGenre?.id,
+    genre: firstGenre
   }
 
   // Fetch facility images (excluding logo)
@@ -104,7 +114,7 @@ export default async function EditFacilityPage({ params }: PageProps) {
         companies={companies || []}
         services={services || []}
         giftCodeAmounts={giftCodeAmounts || []}
-        initialData={facility}
+        initialData={facilityWithGenre}
         currentUserType={currentUser?.type || 'user'}
         images={imagesWithUrls}
         logo={logoWithUrl}

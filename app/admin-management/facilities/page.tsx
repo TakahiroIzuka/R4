@@ -26,6 +26,17 @@ export default async function FacilitiesPage() {
     console.error('Error fetching facilities:', error)
   }
 
+  // Transform facility_genres array to genre object
+  const transformedFacilities = facilities?.map(facility => {
+    const facilityGenres = facility.facility_genres as Array<{ genre: { id: number; name: string } }> | undefined
+    const firstGenre = facilityGenres?.[0]?.genre
+    return {
+      ...facility,
+      genre_id: firstGenre?.id,
+      genre: firstGenre
+    }
+  }) || []
+
   return (
     <div>
       <div className="mb-6">
@@ -34,7 +45,7 @@ export default async function FacilitiesPage() {
 
       <FacilitiesList
         services={services || []}
-        facilities={facilities || []}
+        facilities={transformedFacilities}
         currentUserType="admin"
         currentUserCompanyId={null}
         showNewButton={true}

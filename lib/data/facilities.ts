@@ -19,9 +19,13 @@ function transformFacilityDetail(facilityData: unknown): Facility {
   const detail = Array.isArray(data.detail) ? data.detail[0] : data.detail
   const detailObj = detail as Record<string, unknown> | undefined
 
+  // Extract genre from facility_genres array
+  const facilityGenres = data.facility_genres as Array<{ genre: { id: number; name: string; code: string } }> | undefined
+  const firstGenre = facilityGenres?.[0]?.genre
+
   // Extract detail fields and merge them into the main facility object
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { detail: _detail, ...rest } = data
+  const { detail: _detail, facility_genres: _facilityGenres, ...rest } = data
 
   return {
     ...rest,
@@ -39,6 +43,9 @@ function transformFacilityDetail(facilityData: unknown): Facility {
     address: detailObj?.address as string | undefined,
     tel: detailObj?.tel as string | undefined,
     google_map_url: detailObj?.google_map_url as string | undefined,
+    // Add genre information from facility_genres
+    genre_id: firstGenre?.id,
+    genre: firstGenre,
   } as Facility
 }
 

@@ -6,7 +6,7 @@ export interface Facility {
   user_review_count: number
   lat: number
   lng: number
-  genre_id: number
+  genre_id?: number  // Derived from facility_genres (not a DB column)
   prefecture_id: number
   area_id: number
   company_id?: number

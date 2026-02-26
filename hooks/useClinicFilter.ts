@@ -14,7 +14,7 @@ export function useClinicFilter(allClinics: Facility[]) {
     }
 
     if (genres.length > 0) {
-      filtered = filtered.filter(clinic => genres.includes(clinic.genre_id))
+      filtered = filtered.filter(clinic => clinic.genre_id && genres.includes(clinic.genre_id))
     }
 
     if (ranking) {
