@@ -350,7 +350,6 @@ export default function FacilityForm({
             .from('facilities')
             .update({
               service_id: parseInt(String(serviceId)),
-              genre_id: parseInt(String(genreId)),
               prefecture_id: parseInt(String(prefectureId)),
               area_id: areaId ? parseInt(String(areaId)) : null,
               company_id: companyId ? parseInt(String(companyId)) : null,
@@ -359,6 +358,25 @@ export default function FacilityForm({
             .eq('id', initialData.id)
 
           if (facilityError) throw facilityError
+
+          // Update facility_genres
+          // First delete existing genres
+          await supabase
+            .from('facility_genres')
+            .delete()
+            .eq('facility_id', initialData.id)
+
+          // Then insert new genre
+          if (genreId) {
+            const { error: genreError } = await supabase
+              .from('facility_genres')
+              .insert({
+                facility_id: initialData.id,
+                genre_id: parseInt(String(genreId))
+              })
+
+            if (genreError) throw genreError
+          }
         }
 
         // Update facility_details
@@ -459,7 +477,6 @@ export default function FacilityForm({
           .from('facilities')
           .insert({
             service_id: parseInt(String(serviceId)),
-            genre_id: parseInt(String(genreId)),
             prefecture_id: parseInt(String(prefectureId)),
             area_id: areaId ? parseInt(String(areaId)) : null,
             company_id: companyId ? parseInt(String(companyId)) : null,
@@ -469,6 +486,18 @@ export default function FacilityForm({
           .single()
 
         if (facilityError) throw facilityError
+
+        // Insert facility_genres
+        if (genreId) {
+          const { error: genreError } = await supabase
+            .from('facility_genres')
+            .insert({
+              facility_id: facility.id,
+              genre_id: parseInt(String(genreId))
+            })
+
+          if (genreError) throw genreError
+        }
 
         // Insert facility_details
         const { error: detailError } = await supabase
