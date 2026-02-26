@@ -9,6 +9,16 @@ export default async function NewFacilityPage({ searchParams }: NewFacilityPageP
   const { service } = await searchParams
   const supabase = await createClient()
 
+  // Get current logged-in user
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  // Fetch current user's data from users table
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('auth_user_id', authUser?.id)
+    .single()
+
   // Fetch master data
   const [
     { data: genres },
@@ -36,6 +46,7 @@ export default async function NewFacilityPage({ searchParams }: NewFacilityPageP
         companies={companies || []}
         services={services || []}
         giftCodeAmounts={giftCodeAmounts || []}
+        currentUserType={currentUser?.type || 'admin'}
         defaultServiceId={service ? parseInt(service) : undefined}
       />
     </div>

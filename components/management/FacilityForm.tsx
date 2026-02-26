@@ -468,7 +468,8 @@ export default function FacilityForm({
         }
 
         alert('施設を更新しました')
-        router.push(`/management/facilities?service=${serviceId}`)
+        const basePath = currentUserType === 'admin' ? '/admin-management' : '/management'
+        router.push(`${basePath}/facilities?service=${serviceId}`)
         router.refresh()
         return
       } else {
@@ -563,7 +564,8 @@ export default function FacilityForm({
 
         alert(messages.join('\n'))
 
-        router.push(`/management/facilities?service=${serviceId}`)
+        const basePath = currentUserType === 'admin' ? '/admin-management' : '/management'
+        router.push(`${basePath}/facilities?service=${serviceId}`)
         router.refresh()
         return
       }
@@ -1275,7 +1277,10 @@ export default function FacilityForm({
           </button>
           <button
             type="button"
-            onClick={() => router.push(`/management/facilities?service=${serviceId}`)}
+            onClick={() => {
+              const basePath = currentUserType === 'admin' ? '/admin-management' : '/management'
+              router.push(`${basePath}/facilities?service=${serviceId}`)
+            }}
             className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors font-medium"
           >
             キャンセル
