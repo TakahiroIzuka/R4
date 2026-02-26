@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Facility } from '@/types/facility'
 import ListPanel from '@/components/ListPanel'
 import MapPanel from '@/components/MapPanel'
@@ -60,6 +60,27 @@ export default function HomeClient({
   // Show genre header only if genre props are provided
   const showGenreHeader = !!(genreId && genreName)
   const hideGenreFilter = !!genreId
+
+  // Handle hash navigation to list-section
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hash = window.location.hash
+    if (hash === '#list-section') {
+      // Wait for the page to fully render
+      setTimeout(() => {
+        const element = document.getElementById('list-section')
+        if (element) {
+          const headerHeight = window.innerWidth < 768 ? 64 : 112 // モバイル64px、PC112px
+          const elementPosition = element.getBoundingClientRect().top + window.scrollY
+          window.scrollTo({
+            top: elementPosition - headerHeight - 16, // 16pxの余白
+            behavior: 'smooth'
+          })
+        }
+      }, 100)
+    }
+  }, [])
 
   return (
     <>

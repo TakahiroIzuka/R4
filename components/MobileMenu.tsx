@@ -1,10 +1,14 @@
 'use client'
 
+import Link from 'next/link'
+
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
   logoPath: string
   genreCode?: string
+  pageType?: 'top' | 'list' | 'detail' | 'genre-top'
+  serviceCode: string
   onMapClick?: () => void
   onListClick?: () => void
   onGenreClick?: () => void
@@ -14,11 +18,14 @@ export default function MobileMenu({
   isOpen,
   onClose,
   logoPath,
+  pageType = 'top',
+  serviceCode,
   onMapClick,
   onListClick,
   onGenreClick
 }: MobileMenuProps) {
   const menuColor = 'rgb(163, 151, 125)'
+  const isTopPage = pageType === 'top' || pageType === 'genre-top'
 
   return (
     <>
@@ -61,32 +68,60 @@ export default function MobileMenu({
 
         {/* Map and List Search Buttons (Horizontal) */}
         <div className="flex gap-0.5 w-full">
-          <button
-            onClick={() => {
-              onMapClick?.()
-              onClose()
-            }}
-            className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
-            style={{ color: menuColor, fontSize: '13px' }}
-          >
-            <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
-              マップで絞り込み検索
-            </span>
-            <span className="text-[10px] font-normal">Map search</span>
-          </button>
-          <button
-            onClick={() => {
-              onListClick?.()
-              onClose()
-            }}
-            className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
-            style={{ color: menuColor, fontSize: '13px' }}
-          >
-            <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
-              リストで絞り込み検索
-            </span>
-            <span className="text-[10px] font-normal">List search</span>
-          </button>
+          {isTopPage ? (
+            <button
+              onClick={() => {
+                onMapClick?.()
+                onClose()
+              }}
+              className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
+              style={{ color: menuColor, fontSize: '13px' }}
+            >
+              <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
+                マップで絞り込み検索
+              </span>
+              <span className="text-[10px] font-normal">Map search</span>
+            </button>
+          ) : (
+            <Link
+              href={`/${serviceCode}`}
+              onClick={onClose}
+              className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
+              style={{ color: menuColor, fontSize: '13px' }}
+            >
+              <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
+                マップで絞り込み検索
+              </span>
+              <span className="text-[10px] font-normal">Map search</span>
+            </Link>
+          )}
+          {isTopPage ? (
+            <button
+              onClick={() => {
+                onListClick?.()
+                onClose()
+              }}
+              className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
+              style={{ color: menuColor, fontSize: '13px' }}
+            >
+              <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
+                リストで絞り込み検索
+              </span>
+              <span className="text-[10px] font-normal">List search</span>
+            </button>
+          ) : (
+            <Link
+              href={`/${serviceCode}#list-section`}
+              onClick={onClose}
+              className="flex-1 bg-white px-3 py-2 rounded-md font-semibold transition-all duration-200 hover:bg-gray-50 flex flex-col items-center leading-tight gap-1"
+              style={{ color: menuColor, fontSize: '13px' }}
+            >
+              <span className="pb-1" style={{ borderBottom: '2.5px solid', borderColor: menuColor }}>
+                リストで絞り込み検索
+              </span>
+              <span className="text-[10px] font-normal">List search</span>
+            </Link>
+          )}
         </div>
 
         {/* Genre Search Button */}
