@@ -14,7 +14,15 @@ export function useClinicFilter(allClinics: Facility[]) {
     }
 
     if (genres.length > 0) {
-      filtered = filtered.filter(clinic => clinic.genre_id && genres.includes(clinic.genre_id))
+      filtered = filtered.filter(clinic => {
+        // Check if the facility has ALL selected genres (AND condition)
+        const facilityGenreIds = clinic.genres?.map(g => g.id) || []
+        if (facilityGenreIds.length > 0) {
+          return genres.every(genreId => facilityGenreIds.includes(genreId))
+        }
+        // Fall back to single genre_id if genres array is not available
+        return genres.length === 1 && clinic.genre_id === genres[0]
+      })
     }
 
     if (ranking) {

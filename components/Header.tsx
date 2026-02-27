@@ -113,7 +113,7 @@ export default function Header({
     }
   }
 
-  // Fetch genres on mount and when serviceCode changes
+  // Fetch genres on mount and when serviceCode changes (only genres with facilities)
   useEffect(() => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -138,29 +138,67 @@ export default function Header({
         }
         return res.json()
       })
-      .then(serviceData => {
+      .then(async serviceData => {
         if (serviceData && Array.isArray(serviceData) && serviceData.length > 0) {
           const serviceId = serviceData[0].id
-          // Then fetch genres for this service
-          return fetch(`${supabaseUrl}/rest/v1/genres?service_id=eq.${serviceId}&order=id.asc`, {
-            headers: {
-              'apikey': supabaseKey,
-              'Content-Type': 'application/json'
+
+          // Get facility IDs for this service
+          const facilitiesRes = await fetch(
+            `${supabaseUrl}/rest/v1/facilities?service_id=eq.${serviceId}&select=id`,
+            {
+              headers: {
+                'apikey': supabaseKey,
+                'Content-Type': 'application/json'
+              }
             }
-          })
+          )
+          const facilities = await facilitiesRes.json()
+
+          if (!Array.isArray(facilities) || facilities.length === 0) {
+            setGenres([])
+            return
+          }
+
+          const facilityIds = facilities.map((f: { id: number }) => f.id)
+
+          // Get genre IDs that have facilities
+          const facilityGenresRes = await fetch(
+            `${supabaseUrl}/rest/v1/facility_genres?facility_id=in.(${facilityIds.join(',')})&select=genre_id`,
+            {
+              headers: {
+                'apikey': supabaseKey,
+                'Content-Type': 'application/json'
+              }
+            }
+          )
+          const facilityGenres = await facilityGenresRes.json()
+
+          if (!Array.isArray(facilityGenres) || facilityGenres.length === 0) {
+            setGenres([])
+            return
+          }
+
+          // Get unique genre IDs
+          const genreIds = [...new Set(facilityGenres.map((fg: { genre_id: number }) => fg.genre_id))]
+
+          // Fetch genres that have facilities
+          const genresRes = await fetch(
+            `${supabaseUrl}/rest/v1/genres?id=in.(${genreIds.join(',')})&order=id.asc`,
+            {
+              headers: {
+                'apikey': supabaseKey,
+                'Content-Type': 'application/json'
+              }
+            }
+          )
+          const genresData = await genresRes.json()
+
+          if (Array.isArray(genresData)) {
+            setGenres(genresData)
+          }
+          return
         }
         throw new Error(`Service not found for code: ${serviceCode}`)
-      })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`)
-        }
-        return res.json()
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-          setGenres(data)
-        }
       })
       .catch(err => {
         console.error('Failed to fetch genres:', err)

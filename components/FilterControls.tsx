@@ -24,12 +24,19 @@ export default function FilterControls({
 }: FilterControlsProps) {
   const uniquePrefectures = Array.from(new Set(allFacilities.map(facility => facility.prefecture?.name).filter((name): name is string => Boolean(name)))).sort()
 
-  // Get unique genres with their names
+  // Get unique genres with their names (from all genres of all facilities)
   const uniqueGenres = Array.from(
     allFacilities.reduce((map, facility) => {
-      if (facility.genre_id && facility.genre?.name) {
-        map.set(facility.genre_id, facility.genre.name)
-      }
+      // Use genres array if available, otherwise fall back to single genre
+      const genresToAdd = facility.genres && facility.genres.length > 0
+        ? facility.genres
+        : (facility.genre ? [facility.genre] : [])
+
+      genresToAdd.forEach(genre => {
+        if (genre?.id && genre?.name) {
+          map.set(genre.id, genre.name)
+        }
+      })
       return map
     }, new Map<number, string>())
   ).map(([id, name]) => ({ id, name })).sort((a, b) => a.id - b.id)
@@ -76,7 +83,9 @@ export default function FilterControls({
                 />
                 <span className="text-xs text-gray-700 font-medium">{genre.name}</span>
                 <span className="text-xs text-gray-500">
-                  ({allFacilities.filter(f => f.genre_id === genre.id).length})
+                  ({allFacilities.filter(f =>
+                    f.genres?.some(g => g.id === genre.id) || f.genre_id === genre.id
+                  ).length})
                 </span>
               </label>
             ))}

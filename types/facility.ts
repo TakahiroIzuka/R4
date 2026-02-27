@@ -42,6 +42,11 @@ export interface Facility {
     name: string
     code: string
   }
+  genres?: Array<{
+    id: number
+    name: string
+    code: string
+  }>
   service?: {
     id: number
     code: string

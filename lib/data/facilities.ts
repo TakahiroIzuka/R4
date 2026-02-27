@@ -22,6 +22,8 @@ function transformFacilityDetail(facilityData: unknown): Facility {
   // Extract genre from facility_genres array
   const facilityGenres = data.facility_genres as Array<{ genre: { id: number; name: string; code: string } }> | undefined
   const firstGenre = facilityGenres?.[0]?.genre
+  // Extract all genres
+  const allGenres = facilityGenres?.map(fg => fg.genre) || []
 
   // Extract detail fields and merge them into the main facility object
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -46,6 +48,7 @@ function transformFacilityDetail(facilityData: unknown): Facility {
     // Add genre information from facility_genres
     genre_id: firstGenre?.id,
     genre: firstGenre,
+    genres: allGenres,
   } as Facility
 }
 
