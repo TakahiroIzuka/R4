@@ -44,7 +44,7 @@ const getMenuItems = (userType: 'admin' | 'user', basePath: string) => {
     },
     {
       label: 'ギフトコード一覧',
-      href: basePath,
+      href: `${basePath}/gift-codes`,
     },
   ]
 }
