@@ -30,11 +30,23 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
     name: '',
     email: '',
     googleAccountName: '',
-    privacyConsent: false
+    privacyConsent: false,
+    website: '' // ハニーポット（ボット対策）
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 二重送信防止
+    if (isSubmitting) {
+      return
+    }
+
+    // ハニーポットチェック（ボット対策）
+    if (formData.website) {
+      console.warn('Bot detected: honeypot field filled')
+      return
+    }
 
     // バリデーション
     if (!formData.satisfaction) {
@@ -45,12 +57,34 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       alert('お名前を入力してください')
       return
     }
+    if (formData.name.length > 100) {
+      alert('お名前は100文字以内で入力してください')
+      return
+    }
     if (!formData.email) {
       alert('メールアドレスを入力してください')
       return
     }
+    // メールアドレスの厳格な検証
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      alert('メールアドレスの形式が正しくありません')
+      return
+    }
+    if (formData.email.length > 255) {
+      alert('メールアドレスは255文字以内で入力してください')
+      return
+    }
     if (!formData.googleAccountName) {
       alert('Googleアカウントで登録されているお名前を入力してください')
+      return
+    }
+    if (formData.googleAccountName.length > 100) {
+      alert('Googleアカウント名は100文字以内で入力してください')
+      return
+    }
+    if (formData.feedback && formData.feedback.length > 5000) {
+      alert('ご意見・ご感想は5000文字以内で入力してください')
       return
     }
     if (!formData.privacyConsent) {
@@ -96,7 +130,8 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
         name: '',
         email: '',
         googleAccountName: '',
-        privacyConsent: false
+        privacyConsent: false,
+        website: ''
       })
     } catch (error) {
       console.error('Error submitting form:', error)
@@ -337,6 +372,18 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
                 ※ お名前はフルネームでご記入ください。
               </p>
             </div>
+          </div>
+
+          {/* ハニーポット（ボット対策）- 人間には見えない */}
+          <div className="hidden" aria-hidden="true">
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            />
           </div>
 
           {/* メールアドレス */}
