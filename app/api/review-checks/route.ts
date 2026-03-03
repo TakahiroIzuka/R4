@@ -52,6 +52,11 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // デバッグ: 現在のユーザーロールを確認
+    const { data: { user } } = await supabase.auth.getUser()
+    console.log('Current user:', user ? 'authenticated' : 'anon')
+    console.log('User details:', user)
+
     // 4. facility_idが実際に存在するかを確認（セキュリティ対策）
     const { data: facilityExists, error: facilityCheckError } = await supabase
       .from('facilities')
