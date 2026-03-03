@@ -68,24 +68,7 @@ export async function POST(request: NextRequest) {
     // TODO: RLSポリシーの問題が解決したら、createClient()に戻す
     const supabase = createAdminClient()
 
-    // 4. 重複送信チェック（同じメールアドレス＋施設IDで24時間以内の送信を防ぐ）
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    const { data: existingSubmission } = await supabase
-      .from('review_checks')
-      .select('id')
-      .eq('email', email)
-      .eq('facility_id', facility_id)
-      .gte('created_at', twentyFourHoursAgo)
-      .limit(1)
-
-    if (existingSubmission && existingSubmission.length > 0) {
-      return NextResponse.json(
-        { error: 'このメールアドレスでは、24時間以内に既にアンケートを送信済みです。' },
-        { status: 429 }
-      )
-    }
-
-    // 5. レート制限（IPアドレスごとに1時間あたり10回まで）
+    // 4. レート制限（IPアドレスごとに1時間あたり10回まで）
     const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                      request.headers.get('x-real-ip') ||
                      'unknown'
@@ -103,7 +86,7 @@ export async function POST(request: NextRequest) {
       console.warn('High submission rate detected:', { count, clientIp })
     }
 
-    // 6. facility_idが実際に存在するかを確認（セキュリティ対策）
+    // 5. facility_idが実際に存在するかを確認（セキュリティ対策）
     const { data: facilityExists, error: facilityCheckError } = await supabase
       .from('facilities')
       .select('id')
