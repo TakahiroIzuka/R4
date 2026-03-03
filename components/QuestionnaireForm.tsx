@@ -80,8 +80,10 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
         // エラーレスポンスの詳細を取得
         const errorData = await response.json().catch(() => null)
         const errorMessage = errorData?.error || `送信に失敗しました (ステータス: ${response.status})`
+        const errorDetails = errorData?.details ? `\n詳細: ${errorData.details}` : ''
+        const errorCode = errorData?.code ? `\nコード: ${errorData.code}` : ''
         console.error('API Error:', { status: response.status, errorData })
-        throw new Error(errorMessage)
+        throw new Error(errorMessage + errorDetails + errorCode)
       }
 
       alert('アンケートを送信しました。ありがとうございました。')

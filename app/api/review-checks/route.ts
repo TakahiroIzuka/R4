@@ -92,8 +92,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error inserting review check:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       return NextResponse.json(
-        { error: 'データの保存に失敗しました' },
+        {
+          error: 'データの保存に失敗しました',
+          details: error.message || error.hint || '詳細不明',
+          code: error.code
+        },
         { status: 500 }
       )
     }
