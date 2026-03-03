@@ -77,7 +77,11 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       })
 
       if (!response.ok) {
-        throw new Error('送信に失敗しました')
+        // エラーレスポンスの詳細を取得
+        const errorData = await response.json().catch(() => null)
+        const errorMessage = errorData?.error || `送信に失敗しました (ステータス: ${response.status})`
+        console.error('API Error:', { status: response.status, errorData })
+        throw new Error(errorMessage)
       }
 
       alert('アンケートを送信しました。ありがとうございました。')
@@ -94,7 +98,8 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       })
     } catch (error) {
       console.error('Error submitting form:', error)
-      alert('送信に失敗しました。もう一度お試しください。')
+      const errorMessage = error instanceof Error ? error.message : '送信に失敗しました。もう一度お試しください。'
+      alert(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
