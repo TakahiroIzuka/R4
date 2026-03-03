@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail, getAdminEmails, formatStarRating } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
