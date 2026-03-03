@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
     const { facility_id, reviewer_name, google_account_name, email, review_star, feedback } = body
 
-    // バリデーション
+    // 必須項目チェック
     if (!facility_id || !reviewer_name || !google_account_name || !email || !review_star) {
       return NextResponse.json(
         { error: '必須項目が入力されていません' },
@@ -16,7 +16,55 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 追加バリデーション
+    // 1. review_starの範囲チェック（1-5の整数）
+    const starValue = Number(review_star)
+    if (!Number.isInteger(starValue) || starValue < 1 || starValue > 5) {
+      return NextResponse.json(
+        { error: '評価は1から5の整数で指定してください' },
+        { status: 400 }
+      )
+    }
+
+    // 2. メールアドレスの基本的な形式チェック
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'メールアドレスの形式が正しくありません' },
+        { status: 400 }
+      )
+    }
+
+    // 3. 文字列の長さ制限（スパム対策）
+    if (reviewer_name.length > 100 || google_account_name.length > 100 || email.length > 255) {
+      return NextResponse.json(
+        { error: '入力値が長すぎます' },
+        { status: 400 }
+      )
+    }
+
+    if (feedback && feedback.length > 5000) {
+      return NextResponse.json(
+        { error: 'ご意見・ご感想は5000文字以内で入力してください' },
+        { status: 400 }
+      )
+    }
+
     const supabase = await createClient()
+
+    // 4. facility_idが実際に存在するかを確認（セキュリティ対策）
+    const { data: facilityExists, error: facilityCheckError } = await supabase
+      .from('facilities')
+      .select('id')
+      .eq('id', facility_id)
+      .single()
+
+    if (facilityCheckError || !facilityExists) {
+      return NextResponse.json(
+        { error: '指定された施設が見つかりません' },
+        { status: 404 }
+      )
+    }
 
     // 施設情報を取得（メール送信用）
     const { data: facilityData } = await supabase
