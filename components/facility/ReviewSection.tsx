@@ -91,13 +91,6 @@ function UserReviewCard({ review }: { review: Review }) {
     }
   }
 
-  // Truncate text
-  const truncateText = (text: string, maxLength: number = 100) => {
-    if (!text) return ''
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + '...'
-  }
-
   // Reviewer avatar with optional link
   const avatarContent = review.reviewerPhotoUrl ? (
     <img
@@ -127,14 +120,14 @@ function UserReviewCard({ review }: { review: Review }) {
         </div>
         <img src="/common/google-logo.svg" alt="Google" className="h-4 flex-shrink-0 self-start" />
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         <img
           src={review.stars ? getStarImage(review.stars) : '/common/star_0.5.png'}
           alt={`${review.stars}星評価`}
           className="w-23 h-4 mb-2"
         />
-        <div className="text-xs text-gray-700 overflow-hidden">
-          {truncateText(review.text)}
+        <div className="text-sm text-gray-700">
+          {review.text}
         </div>
       </div>
     </div>
