@@ -12,9 +12,10 @@ interface Service {
 
 interface AdminHeaderProps {
   visibleServiceCodes?: ServiceCode[]
+  onMenuClick?: () => void
 }
 
-export default function AdminHeader({ visibleServiceCodes }: AdminHeaderProps) {
+export default function AdminHeader({ visibleServiceCodes, onMenuClick }: AdminHeaderProps) {
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -76,8 +77,18 @@ export default function AdminHeader({ visibleServiceCodes }: AdminHeaderProps) {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 h-14 flex items-center justify-end px-6 shadow-sm">
-        <div className="relative" ref={menuRef}>
+      <header className="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 md:px-6 shadow-sm">
+        {/* モバイル用ハンバーガーボタン */}
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 hover:bg-gray-100 rounded transition-colors"
+          aria-label="メニューを開く"
+        >
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div className="relative ml-auto" ref={menuRef}>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"

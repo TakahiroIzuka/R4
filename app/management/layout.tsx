@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import AdminSidebar from '@/components/management/AdminSidebar'
-import AdminHeader from '@/components/management/AdminHeader'
+import ManagementShell from '@/components/management/ManagementShell'
 import { ServiceCode } from '@/lib/constants/services'
 
 export default async function AdminLayout({
@@ -53,14 +52,12 @@ export default async function AdminLayout({
     .map(s => s.code as ServiceCode) || []
 
   return (
-    <div className="flex min-h-screen bg-[#f0f0f1]">
-      <AdminSidebar currentUserType="user" basePath="/management" />
-      <div className="flex-1 ml-64">
-        <AdminHeader visibleServiceCodes={visibleServiceCodes} />
-        <main className="p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+    <ManagementShell
+      currentUserType="user"
+      basePath="/management"
+      visibleServiceCodes={visibleServiceCodes}
+    >
+      {children}
+    </ManagementShell>
   )
 }

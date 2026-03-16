@@ -7,6 +7,8 @@ import { useState } from 'react'
 interface AdminSidebarProps {
   currentUserType: 'admin' | 'user'
   basePath?: '/management' | '/admin-management'
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 const getMenuItems = (userType: 'admin' | 'user', basePath: string) => {
@@ -68,7 +70,7 @@ const getMasterItems = (basePath: string) => [
   },
 ]
 
-export default function AdminSidebar({ currentUserType, basePath = '/management' }: AdminSidebarProps) {
+export default function AdminSidebar({ currentUserType, basePath = '/management', isOpen = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const [isMasterExpanded, setIsMasterExpanded] = useState(pathname.startsWith(`${basePath}/masters`))
   const menuItems = getMenuItems(currentUserType, basePath)
@@ -85,8 +87,18 @@ export default function AdminSidebar({ currentUserType, basePath = '/management'
   const isMasterActive = pathname.startsWith(`${basePath}/masters`)
 
   return (
-    <aside className="w-64 bg-[#1e1e1e] text-white min-h-screen fixed left-0 top-0 border-r border-[#2d2d2d]">
+    <aside className={`w-64 bg-[#1e1e1e] text-white min-h-screen fixed left-0 top-0 border-r border-[#2d2d2d] z-40 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       <div className="p-5">
+        {/* モバイル閉じるボタン */}
+        <button
+          onClick={onClose}
+          className="md:hidden absolute top-4 right-4 p-1 text-gray-400 hover:text-white"
+          aria-label="メニューを閉じる"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
         <h1 className="text-xl font-semibold mb-8 px-3 text-gray-200">管理画面</h1>
         <nav>
           <ul className="space-y-1">
