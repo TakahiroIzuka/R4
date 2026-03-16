@@ -348,7 +348,7 @@ export default function Header({
               alt={`${serviceName}クチコミランキング`}
               width={200}
               height={45}
-              className="h-12"
+              className="h-12 w-auto"
             />
           </Link>
           <Link href={logoLink} className="hidden md:block">
