@@ -168,6 +168,33 @@ ${approvalUrl}
   return sendEmail(toEmail, `【${facilityName}】クチコミ承認のお願い`, body)
 }
 
+// 既出通知メール送信関数（アンケート送信者へ）
+async function sendAlreadyConfirmedEmail(
+  toEmail: string,
+  reviewerName: string,
+  facilityName: string,
+  googleAccountName: string,
+  reviewUrl: string | null,
+  stars: number | null
+): Promise<boolean> {
+  const starsText = stars !== null ? `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} (${stars}点)` : '不明'
+  const body = `${reviewerName} 様
+
+該当のGoogleクチコミは、過去にアンケートにご回答済みの投稿者により特典を受領済みですので、今回の特典は適用されません。
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+施設名: ${facilityName}
+Googleアカウント名: ${googleAccountName}
+評価: ${starsText}
+クチコミURL: ${reviewUrl || '未取得'}
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+※このメールは自動送信されています。
+`
+
+  return sendEmail(toEmail, `【${facilityName}】クチコミ特典のお知らせ`, body)
+}
+
 // エラー通知メール送信関数（アンケート送信者へ）
 async function sendErrorNotificationEmail(
   toEmail: string,
@@ -334,32 +361,6 @@ serve(async (req) => {
 
     const typedReviewCheck = reviewCheck as ReviewCheck
 
-    // 同じreview_check_idの他のタスクが既にalready_confirmedかチェック
-    // → 既にalready_confirmedなら、このタスクもalready_confirmedにして終了（Apify呼び出しスキップ）
-    const { data: siblingAlreadyConfirmed } = await supabase
-      .from('review_check_tasks')
-      .select('id')
-      .eq('review_check_id', typedTask.review_check_id)
-      .eq('status', 'already_confirmed')
-      .neq('id', review_check_task_id)
-      .limit(1)
-      .single()
-
-    if (siblingAlreadyConfirmed) {
-      // このタスクもalready_confirmedに更新
-      await supabase
-        .from('review_check_tasks')
-        .update({ status: 'already_confirmed', executed_at: new Date().toISOString() })
-        .eq('id', review_check_task_id)
-
-      console.log(`Sibling task already_confirmed, skipping check for task: ${review_check_task_id}`)
-
-      return new Response(
-        JSON.stringify({ success: true, status: 'already_confirmed', message: 'Sibling task already confirmed by another submission' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
     // 施設詳細からname, google_map_url, review_approval_emailを取得
     const { data: facilityDetail, error: facilityDetailError } = await supabase
       .from('facility_details')
@@ -391,6 +392,32 @@ serve(async (req) => {
         .eq('id', review_check_task_id)
       return new Response(
         JSON.stringify({ message: 'No google_map_url', status: 'failed' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 同じreview_check_idの他のタスクが既にalready_confirmedかチェック
+    // → 既にalready_confirmedなら、このタスクもalready_confirmedにして終了（Apify呼び出しスキップ）
+    const { data: siblingAlreadyConfirmed } = await supabase
+      .from('review_check_tasks')
+      .select('id')
+      .eq('review_check_id', typedTask.review_check_id)
+      .eq('status', 'already_confirmed')
+      .neq('id', review_check_task_id)
+      .limit(1)
+      .single()
+
+    if (siblingAlreadyConfirmed) {
+      // このタスクもalready_confirmedに更新
+      await supabase
+        .from('review_check_tasks')
+        .update({ status: 'already_confirmed', executed_at: new Date().toISOString() })
+        .eq('id', review_check_task_id)
+
+      console.log(`Sibling task already_confirmed, skipping check for task: ${review_check_task_id}`)
+
+      return new Response(
+        JSON.stringify({ success: true, status: 'already_confirmed', message: 'Sibling task already confirmed by another submission' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -434,6 +461,16 @@ serve(async (req) => {
           .eq('id', typedReviewCheck.id)
 
         console.log(`Review already confirmed by another review_check for: ${typedReviewCheck.google_account_name}`)
+
+        // 既出通知メール送信（アンケート送信者へ）
+        await sendAlreadyConfirmedEmail(
+          typedReviewCheck.email,
+          typedReviewCheck.reviewer_name,
+          facilityDetail.name,
+          typedReviewCheck.google_account_name,
+          reviewUrl,
+          stars
+        )
 
         return new Response(
           JSON.stringify({ success: true, status: 'already_confirmed', message: 'This review was already confirmed by another submission' }),
