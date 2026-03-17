@@ -488,7 +488,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             {/* タイトル */}
             <h2 className="font-semibold mb-3" style={{ color: 'rgb(165, 153, 126)' }}>
               <span className="text-4xl block md:inline" style={{ fontFamily: '"Crimson Text", serif', fontWeight: 700 }}>Notes.</span>
-              <span className="text-xl block md:inline md:ml-2 mt-1 md:mt-0">住宅会社クチコミランキングからのお願い</span>
+              <span className="text-lg md:text-xl block md:inline md:ml-2 mt-1 md:mt-0">住宅会社クチコミランキングからのお願い</span>
             </h2>
 
             {/* 画像枠 */}
@@ -504,27 +504,29 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             </div>
 
             {/* 本文 */}
-            <p className="text-base text-red-600 leading-relaxed mb-5 text-center">
-              個人・会社を問わず、<br />
-              投稿内容が社会的評価を低下させるおそれのある場合、<br />
-              名誉毀損に該当する可能性があります。<br />
-              その結果、法令に基づく発信者情報開示手続による投稿者の氏名・住所等の特定、<br />
-              投稿者に対する損害賠償請求並びに刑事告訴等の法的措置を講じられるリスクがありますので、<br />
+            <p className="text-base text-red-600 leading-relaxed mb-5 text-left md:text-center">
+              個人・会社を問わず、<br className="hidden md:block" />
+              投稿内容が社会的評価を低下させるおそれのある場合、<br className="hidden md:block" />
+              名誉毀損に該当する可能性があります。<br className="hidden md:block" />
+              その結果、法令に基づく発信者情報開示手続による投稿者の氏名・住所等の特定、<br className="hidden md:block" />
+              投稿者に対する損害賠償請求並びに刑事告訴等の法的措置を講じられるリスクがありますので、<br className="hidden md:block" />
               投稿内容には十分ご留意の上、ご投稿ください。
             </p>
 
             {/* チェックボックス + リンク */}
-            <div className="flex items-center justify-center gap-2 mb-5">
-              <input
-                type="checkbox"
-                id="reviewAgreed"
-                checked={reviewAgreed}
-                onChange={(e) => setReviewAgreed(e.target.checked)}
-                className="w-4 h-4 cursor-pointer"
-              />
-              <label htmlFor="reviewAgreed" className="text-base text-gray-700 cursor-pointer select-none">
-                承知致しました。
-              </label>
+            <div className="flex flex-col items-center justify-center gap-2 mb-5 md:flex-row">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="reviewAgreed"
+                  checked={reviewAgreed}
+                  onChange={(e) => setReviewAgreed(e.target.checked)}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="reviewAgreed" className="text-base text-gray-700 cursor-pointer select-none">
+                  承知致しました。
+                </label>
+              </div>
               {reviewAgreed && (
                 <a
                   href={googleReviewUrl || '#'}
