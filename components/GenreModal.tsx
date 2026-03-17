@@ -46,7 +46,7 @@ export default function GenreModal({ isOpen, onClose, genres }: GenreModalProps)
         {/* Title Section */}
         <div className="px-4 py-4 md:px-6 md:py-6">
           <h2 className="font-semibold" style={{ color: 'rgb(165, 153, 126)' }}>
-            <span className="text-2xl md:text-4xl block md:inline">SELECT GENRE.</span>
+            <span className="text-2xl md:text-4xl block md:inline" style={{ fontFamily: '"Crimson Text", serif', fontWeight: 700 }}>SELECT GENRE.</span>
             <span className="text-base md:text-xl block md:inline md:ml-2 mt-1 md:mt-0">ジャンルから探す</span>
           </h2>
         </div>

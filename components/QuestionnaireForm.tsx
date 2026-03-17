@@ -18,6 +18,8 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [reviewAgreed, setReviewAgreed] = useState(false)
 
   // インセンティブ画像のパス（ギフトコード額がある場合のみ表示）
   const incentiveImagePath = giftCodeAmount
@@ -328,7 +330,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、今後の顧客満足度改善に向けて使用させていただきます。※Googleクチコミ投稿はこちらから<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(165, 153, 126)' }}>任意</span></span>
+              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(165, 153, 126)' }}>任意</span></span>
             </label>
             <div className="md:w-1/2">
               <textarea
@@ -467,6 +469,87 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
         </div>
       </form>
     </div>
+
+      {/* Googleクチコミ注意モーダル（星1,2用） */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowReviewModal(false)}>
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            {/* 閉じるボタン */}
+            <button
+              type="button"
+              onClick={() => setShowReviewModal(false)}
+              className="absolute top-3 right-3 leading-none w-7 h-7 flex items-center justify-center hover:opacity-80 transition-opacity"
+
+              style={{ backgroundColor: '#E3E0D7', borderRadius: '5px', color: '#666', fontSize: '10px' }}
+            >
+              ✕
+            </button>
+
+            {/* タイトル */}
+            <h2 className="font-semibold mb-3" style={{ color: 'rgb(165, 153, 126)' }}>
+              <span className="text-4xl block md:inline" style={{ fontFamily: '"Crimson Text", serif', fontWeight: 700 }}>Notes.</span>
+              <span className="text-xl block md:inline md:ml-2 mt-1 md:mt-0">住宅会社クチコミランキングからのお願い</span>
+            </h2>
+
+            {/* 画像枠 */}
+            <div className="w-full bg-white flex items-center justify-center rounded mb-4">
+              <Image
+                src="/common/g-review-alert.png"
+                alt="クチコミ注意"
+                width={400}
+                height={192}
+                className="object-contain w-full h-full rounded"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            </div>
+
+            {/* 本文 */}
+            <p className="text-base text-red-600 leading-relaxed mb-5 text-center">
+              個人・会社を問わず、<br />
+              投稿内容が社会的評価を低下させるおそれのある場合、<br />
+              名誉毀損に該当する可能性があります。<br />
+              その結果、法令に基づく発信者情報開示手続による投稿者の氏名・住所等の特定、<br />
+              投稿者に対する損害賠償請求並びに刑事告訴等の法的措置を講じられるリスクがありますので、<br />
+              投稿内容には十分ご留意の上、ご投稿ください。
+            </p>
+
+            {/* チェックボックス + リンク */}
+            <div className="flex items-center justify-center gap-2 mb-5">
+              <input
+                type="checkbox"
+                id="reviewAgreed"
+                checked={reviewAgreed}
+                onChange={(e) => setReviewAgreed(e.target.checked)}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <label htmlFor="reviewAgreed" className="text-base text-gray-700 cursor-pointer select-none">
+                承知致しました。
+              </label>
+              {reviewAgreed && (
+                <a
+                  href={googleReviewUrl || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-base hover:underline"
+                  style={{ color: 'rgb(165, 153, 126)' }}
+                >
+                  Googleクチコミ投稿はこちらから
+                </a>
+              )}
+            </div>
+
+            {/* 閉じるボタン */}
+            <button
+              type="button"
+              onClick={() => setShowReviewModal(false)}
+              className="w-full py-2 rounded text-base hover:opacity-80 transition-opacity"
+              style={{ color: 'rgb(165, 153, 126)', border: '2px solid rgb(165, 153, 126)', borderRadius: '10px' }}
+            >
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
