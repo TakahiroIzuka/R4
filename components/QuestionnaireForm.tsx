@@ -158,7 +158,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
         ]}
       />
 
-      <div className="max-w-6xl mx-2.5 md:mx-auto bg-white rounded-2xl shadow-2xl pt-2.5 pb-[30px] md:py-12 px-2.5 md:px-32 mt-2.5 md:mt-12">
+      <div className="max-w-6xl mx-2.5 md:mx-auto bg-white rounded-2xl shadow-2xl pt-2.5 pb-[30px] md:py-12 px-2.5 md:px-20 mt-2.5 md:mt-12">
       {/* タイトル */}
       <h1 className="text-lg md:text-xl font-bold text-gray-800 mb-2">
         {facilityName}への<br className="md:hidden" />
@@ -166,7 +166,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       </h1>
 
       {/* 英語タイトル */}
-      <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
+      <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-8">
         <div style={{ width: '30px', height: '4px', backgroundColor: 'rgb(165, 153, 126)' }} className="md:w-[40px] md:h-[5px]"></div>
         <p
           className="text-xs md:text-base font-semibold"
@@ -177,11 +177,11 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       </div>
 
       {/* 説明欄 */}
-      <div className="bg-white rounded-lg p-4 md:p-6 mb-6 md:mb-8 text-center">
+      <div className="bg-white rounded-lg p-4 md:p-6 mb-3 md:mb-8 text-left md:text-center">
         <p className="text-sm md:text-base text-gray-700 leading-relaxed">
-          {facilityName}への率直なご意見、ご感想をいただけませんか？<br />
-          お預かりしたアンケート内容は、今後の顧客満足度改善に向けて使用させていただきます。<br />
-          お客様の声がスタッフの励みになりますので、ご協力の程、宜しくお願いします。
+          {facilityName}への率直なご意見、ご感想をいただけませんか？<br className="hidden md:block" />
+          お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<br className="hidden md:block" />
+          お客様の声が今後、住宅会社選びで迷っていらっしゃる方々の参考になりますので、ご協力の程、宜しくお願いします。
         </p>
       </div>
 
@@ -330,7 +330,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(165, 153, 126)' }}>任意</span></span>
+              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(165, 153, 126)' }}>任意</span></span>
             </label>
             <div className="md:w-1/2">
               <textarea
