@@ -5,6 +5,7 @@ export const SERVICE_CODES = {
   MEDICAL: 'medical',
   HOUSE_BUILDER: 'house-builder',
   VACATION_STAY: 'vacation-stay',
+  KUCHIKOMI: 'kuchikomiru',
 } as const
 
 export type ServiceCode = typeof SERVICE_CODES[keyof typeof SERVICE_CODES]
@@ -74,6 +75,13 @@ export const REVIEW_RANKING_CONFIG = {
     },
   },
   [SERVICE_CODES.VACATION_STAY]: {
+    buttonText: '宿泊施設の掲載リクエストはこちら',
+    copyRightText: 'Vacation Stay Review Ranking.',
+    lineColor: 'rgb(165, 153, 126)',
+    color: 'rgb(165, 153, 126)',
+    genres: {},
+  },
+  [SERVICE_CODES.KUCHIKOMI]: {
     buttonText: '宿泊施設の掲載リクエストはこちら',
     copyRightText: 'Vacation Stay Review Ranking.',
     lineColor: 'rgb(165, 153, 126)',
