@@ -77,7 +77,7 @@ async function sendEmail(
   }
 
   // ローカル開発用: SMTP
-  const smtpHost = Deno.env.get('SMTP_HOST') || 'supabase_inbucket_my-map'
+  const smtpHost = Deno.env.get('SMTP_HOST') || 'supabase_inbucket_R4'
   const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '1025')
 
   const encoder = new TextEncoder()
