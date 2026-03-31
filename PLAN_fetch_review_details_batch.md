@@ -58,7 +58,7 @@ SELECT cron.schedule(
 ```
 
 ### 4. 環境変数
-- `GOOGLE_PLACES_API_KEY`: Google Places API キー（Supabase Dashboardで設定）
+- `GOOGLE_MAP_API_KEY`: Google Map API キー（Supabase Dashboardで設定）
 
 ## 実装順序
 

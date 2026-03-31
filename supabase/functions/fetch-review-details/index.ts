@@ -51,12 +51,12 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY')
+    const googleMapApiKey = Deno.env.get('GOOGLE_MAP_API_KEY')
 
-    if (!googlePlacesApiKey) {
-      console.error('GOOGLE_PLACES_API_KEY is not set')
+    if (!googleMapApiKey) {
+      console.error('GOOGLE_MAP_API_KEY is not set')
       return new Response(
-        JSON.stringify({ error: 'GOOGLE_PLACES_API_KEY is not configured' }),
+        JSON.stringify({ error: 'GOOGLE_MAP_API_KEY is not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -133,7 +133,7 @@ serve(async (req) => {
 
       try {
         // Place Details APIを呼び出し
-        const placeDetails = await fetchPlaceDetails(facility.google_place_id, googlePlacesApiKey)
+        const placeDetails = await fetchPlaceDetails(facility.google_place_id, googleMapApiKey)
 
         // facility_detailsを更新
         const { error: updateError } = await supabase

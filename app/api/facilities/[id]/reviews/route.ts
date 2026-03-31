@@ -53,10 +53,10 @@ interface GooglePlacesResponse {
 
 // Google Places API (New) からレビューを取得
 async function fetchGooglePlacesReviews(placeId: string): Promise<FormattedReview[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY
+  const apiKey = process.env.GOOGLE_MAP_API_KEY
 
   if (!placeId || !apiKey) {
-    console.log('Missing placeId or GOOGLE_PLACES_API_KEY')
+    console.log('Missing placeId or GOOGLE_MAP_API_KEY')
     return []
   }
 
