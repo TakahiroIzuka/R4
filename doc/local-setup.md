@@ -9,7 +9,7 @@
 ## 1. リポジトリのクローンと依存パッケージのインストール
 
 ```bash
-git clone <リポジトリURL>
+git clone git@github.com:TakahiroIzuka/R4.git
 cd R4
 npm install
 ```
@@ -21,16 +21,6 @@ npx supabase start
 ```
 
 初回起動時は Docker イメージのダウンロードに時間がかかります。
-起動が完了すると、以下のような情報が表示されます。
-
-```
-API URL: http://127.0.0.1:54321
-anon key: eyJ...
-service_role key: eyJ...
-Studio URL: http://127.0.0.1:54323
-```
-
-この情報を次の手順で使用します。
 
 ## 3. 環境変数の設定
 
@@ -43,7 +33,13 @@ cp .env.local.example .env.local
 ```
 
 コピー後、`.env.local` を開いて `<...>` の部分を実際の値に置き換えてください。
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` と `SUPABASE_SERVICE_ROLE_KEY` は手順 2 で表示された値を設定します。
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` と `SUPABASE_SERVICE_ROLE_KEY` は以下のコマンドで確認できます。
+
+```bash
+npx supabase status -o env
+```
+
+出力される `ANON_KEY` と `SERVICE_ROLE_KEY` の値をそれぞれ設定してください。
 
 ### Edge Functions 用（`supabase/functions/.env`）
 
@@ -75,7 +71,20 @@ npx supabase functions serve
 
 Edge Functions の環境変数は `supabase/functions/.env` から読み込まれます（手順 3 で設定済み）。
 
-## 6. Next.js 開発サーバーの起動
+## 6. 施設評価とレビュー数の更新
+
+Edge Functions が起動している状態で、別のターミナルから以下を実行します。
+
+```bash
+curl -L -X POST 'http://127.0.0.1:54321/functions/v1/fetch-review-details' \
+  -H 'Authorization: Bearer SUPABASE_ANON_KEY' \
+  -H 'Content-Type: application/json' \
+  --data '{"name":"Functions"}'
+```
+
+`SUPABASE_ANON_KEY` は `npx supabase status -o env` で確認できる `ANON_KEY` の値に置き換えてください。
+
+## 7. Next.js 開発サーバーの起動
 
 ```bash
 npm run dev
@@ -83,7 +92,7 @@ npm run dev
 
 `http://localhost:3000` でアクセスできます。
 
-## 7. 開発に便利なツール
+## 8. 開発に便利なツール
 
 | ツール | URL | 説明 |
 |--------|-----|------|
@@ -91,7 +100,7 @@ npm run dev
 | Supabase Studio | http://127.0.0.1:54323 | DB 管理画面 |
 | Inbucket | http://127.0.0.1:54324 | メールテスト用 Web UI |
 
-## 8. ローカル環境の停止
+## 9. ローカル環境の停止
 
 ```bash
 npx supabase stop
