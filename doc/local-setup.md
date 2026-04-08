@@ -51,7 +51,7 @@ cp supabase/functions/.env.example supabase/functions/.env
 
 コピー後、`supabase/functions/.env` を開いて `<...>` の部分を実際の値に置き換えてください。
 
-## 4. データベースのマイグレーションとシード
+## 4. データベースのマイグレーションとシード実行
 
 `npx supabase start` 時に `supabase/migrations/` 配下のマイグレーションと `supabase/seed.sql` が自動的に適用されます。
 
