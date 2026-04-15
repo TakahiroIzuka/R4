@@ -11,7 +11,7 @@
 
 ## 本番環境（Vercel + Supabase）
 
-### 1. Supabase のマイグレーション適用
+### 1. DB構造を修正した場合
 
 Supabase CLI でリモートプロジェクトにリンクし、マイグレーションを適用します。
 
@@ -23,7 +23,7 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push
 ```
 
-### 2. Edge Functions のデプロイ
+### 2. バックエンドの処理を修正した場合
 
 ```bash
 # 全ての Edge Functions をデプロイ
@@ -45,7 +45,7 @@ npx supabase functions deploy <function-name>
 | `send-admin-approval-email` | 管理者承認メール送信 |
 | `send-gift-code-shortage-email` | ギフトコード不足通知メール送信 |
 
-### 3. Vercel へのデプロイ
+### 3. フロントエンドを修正した場合
 
 Vercel は GitHub リポジトリと連携しており、`main` ブランチへの push で自動デプロイされます。
 
