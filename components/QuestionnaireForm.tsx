@@ -85,6 +85,12 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       alert('Googleアカウント名は100文字以内で入力してください')
       return
     }
+    if (formData.satisfaction === '1' || formData.satisfaction === '2' || formData.hasGoogleAccount === 'no') {
+      if (!formData.feedback || !formData.feedback.trim()) {
+        alert('ご意見・ご感想を入力してください')
+        return
+      }
+    }
     if (formData.feedback && formData.feedback.length > 5000) {
       alert('ご意見・ご感想は5000文字以内で入力してください')
       return
@@ -330,7 +336,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(165, 153, 126)' }}>任意</span></span>
+              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
             </label>
             <div className="md:w-1/2">
               <textarea
