@@ -207,7 +207,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           {/* 満足度 */}
           <div className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3">
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}へのご満足度<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>{facilityName}へのご満足度</span>
             </label>
             <div className="md:w-1/2 flex flex-col items-center md:items-start gap-3">
               {[5, 4, 3, 2, 1].map((star) => (
@@ -336,7 +336,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button></span>
             </label>
             <div className="md:w-1/2">
               <textarea
@@ -367,7 +367,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           {/* お名前 */}
           <div className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3">
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center px-3 md:px-5 py-3 md:py-[25px]" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>お名前<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>お名前</span>
             </label>
             <div className="md:w-1/2">
               <input
@@ -397,7 +397,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           {/* メールアドレス */}
           <div className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3">
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center px-3 md:px-5 py-3 md:py-[25px]" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>メールアドレス<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>メールアドレス</span>
             </label>
             <div className="md:w-1/2">
               <input
@@ -415,7 +415,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           {/* Googleアカウント名 */}
           <div className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3">
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center px-3 md:px-5 py-3 md:py-[25px]" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>Googleアカウントで登録されているお名前<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>Googleアカウントで登録されているお名前</span>
             </label>
             <div className="md:w-1/2">
               <input
@@ -433,7 +433,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
           {/* 個人情報同意 */}
           <div className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3">
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center px-3 md:px-5 py-3 md:py-[25px]" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>個人情報のお取り扱いについて<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span><span className="mr-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span>個人情報のお取り扱いについて</span>
             </label>
             <div className="md:w-1/2 flex flex-col justify-center">
               <label className="flex items-start cursor-pointer mb-2">
