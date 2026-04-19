@@ -7,6 +7,7 @@ interface SendEmailParams {
   to: string | string[]
   subject: string
   body: string
+  bcc?: string | string[]
 }
 
 interface SendEmailResult {
@@ -23,26 +24,32 @@ export async function sendEmail({
   to,
   subject,
   body,
+  bcc,
 }: SendEmailParams): Promise<SendEmailResult> {
   const resendApiKey = process.env.RESEND_API_KEY
   const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_FROM || 'noreply@example.com'
   const recipients = Array.isArray(to) ? to : [to]
+  const bccRecipients = bcc ? (Array.isArray(bcc) ? bcc : [bcc]).filter(Boolean) : []
 
   // Resend APIキーがある場合はResendを使用
   if (resendApiKey) {
     try {
+      const payload: Record<string, unknown> = {
+        from: fromEmail,
+        to: recipients,
+        subject: subject,
+        text: body,
+      }
+      if (bccRecipients.length > 0) {
+        payload.bcc = bccRecipients
+      }
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: recipients,
-          subject: subject,
-          text: body,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
@@ -100,16 +107,15 @@ export async function sendEmail({
             case 4: // After DATA
               // Encode subject in UTF-8 Base64
               const encodedSubject = `=?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`
-              const emailContent = [
+              const headers = [
                 `From: ${fromEmail}`,
                 `To: ${recipients.join(', ')}`,
-                `Subject: ${encodedSubject}`,
-                'MIME-Version: 1.0',
-                'Content-Type: text/plain; charset=UTF-8',
-                '',
-                body,
-                '.',
-              ].join('\r\n')
+              ]
+              if (bccRecipients.length > 0) {
+                headers.push(`Bcc: ${bccRecipients.join(', ')}`)
+              }
+              headers.push(`Subject: ${encodedSubject}`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8')
+              const emailContent = [...headers, '', body, '.'].join('\r\n')
               sendCommand(emailContent)
               step++
               break
@@ -160,4 +166,18 @@ export function getAdminEmails(): string[] {
 export function formatStarRating(rating: number): string {
   const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
   return `${stars} (${rating}段階)`
+}
+
+/**
+ * メールフッターを取得
+ */
+export function getEmailFooter(serviceName: string): string {
+  return `クチコミル（${serviceName}クチコミランキング）事務局
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+運営会社 : 合同会社Rainmans
+本社 : 兵庫県神戸市中央区港島中町2-3-8
+東京支店 : 東京都杉並区高円寺北3-33-10
+メールアドレス : info@mister-review-ranking.com
+電話番号 : 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 }

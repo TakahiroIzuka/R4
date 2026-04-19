@@ -115,7 +115,9 @@ serve(async (req) => {
       facilityName,
       facilityUrl,
       reviewUrl,
-      serviceId
+      serviceId,
+      serviceName,
+      reviewStar
     } = await req.json()
 
     // 環境変数からADMIN_EMAILSを取得
@@ -133,25 +135,48 @@ serve(async (req) => {
     const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
     const reviewDetailUrl = `${baseUrl}/admin-management/reviews/${reviewCheckId}/edit`
 
-    const body = `管理者様
+    const starRating = reviewStar !== null && reviewStar !== undefined
+      ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}段階)`
+      : '不明'
 
-施設オーナーによるクチコミ承認が完了しました。
-以下のリンクからクチコミ詳細にアクセスして、最終承認をお願いします。
+    const footer = `クチコミル（${serviceName}クチコミランキング）事務局
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+運営会社 : 合同会社Rainmans
+本社 : 兵庫県神戸市中央区港島中町2-3-8
+東京支店 : 東京都杉並区高円寺北3-33-10
+メールアドレス : info@mister-review-ranking.com
+電話番号 : 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 
-━━━━━━━━━━━━━━━━━━━━━━━━
-お名前: ${reviewerName} 様
-メールアドレス: ${reviewerEmail}
-Googleアカウント名: ${googleAccountName}
-施設名: ${facilityName}
-施設URL: ${facilityUrl || '未設定'}
-クチコミURL: ${reviewUrl || '未取得'}
-施設承認: 完了
-━━━━━━━━━━━━━━━━━━━━━━━━
+    const body = `${facilityName}の施設オーナーによるクチコミ承認が完了しました。
 
-▼ 管理画面のクチコミ詳細はこちら
+■ 新しいGoogleクチコミ投稿の内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5段階評価アンケート
+${starRating}
+
+- お名前
+${reviewerName}
+
+- メールアドレス
+${reviewerEmail}
+
+- Googleアカウント名
+${googleAccountName}
+
+- Google Business Profile（Googleマップ）のURL
+${facilityUrl || ''}
+
+- GoogleクチコミのURL
+${reviewUrl || ''}
+
+- 施設承認ステータス : 完了
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ 承認する場合は、管理画面にアクセスして最終承認をお願いします。 ▼
 ${reviewDetailUrl}
 
-※このメールは自動送信されています。
+${footer}
 `
 
     // 全ての管理者にメール送信
@@ -159,7 +184,7 @@ ${reviewDetailUrl}
       adminEmails.map((email: string) =>
         sendEmail(
           email,
-          `【管理者承認依頼】${facilityName} のクチコミ承認`,
+          `【管理者承認依頼】${facilityName}の施設オーナーによるクチコミ承認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
           body
         )
       )

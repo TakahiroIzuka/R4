@@ -11,7 +11,9 @@ async function sendAdminApprovalRequestEmail(
   facilityName: string,
   facilityUrl: string | null,
   reviewUrl: string | null,
-  serviceId: number
+  serviceId: number,
+  serviceName: string,
+  reviewStar: number | null
 ): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -40,6 +42,8 @@ async function sendAdminApprovalRequestEmail(
           facilityUrl,
           reviewUrl,
           serviceId,
+          serviceName,
+          reviewStar,
         }),
       }
     )
@@ -86,6 +90,7 @@ export async function POST(
         facility_id,
         is_owner_approved,
         review_url,
+        review_star,
         facility:facilities!facility_id(service_id)
       `)
       .eq('id', reviewCheckId)
@@ -147,6 +152,14 @@ export async function POST(
       return NextResponse.json({ error: '施設のサービス情報が見つかりません' }, { status: 404 })
     }
 
+    // サービス名を取得
+    const { data: serviceData } = await supabase
+      .from('services')
+      .select('name')
+      .eq('id', serviceId)
+      .single()
+    const serviceName = serviceData?.name || ''
+
     // 管理者へ承認依頼メールを送信（Edge Function経由）
     const emailSent = await sendAdminApprovalRequestEmail(
       parseInt(reviewCheckId),
@@ -157,7 +170,9 @@ export async function POST(
       facilityDetail.name,
       facilityDetail.google_map_url,
       reviewCheck.review_url,
-      serviceId
+      serviceId,
+      serviceName,
+      reviewCheck.review_star ?? null
     )
 
     if (!emailSent) {

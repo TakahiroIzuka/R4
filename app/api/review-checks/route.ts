@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendEmail, getAdminEmails, formatStarRating } from '@/lib/email'
+import { sendEmail, getAdminEmails, formatStarRating, getEmailFooter } from '@/lib/email'
 
 // HTMLタグを除去してXSS攻撃を防ぐ
 function sanitizeInput(input: string): string {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // 5. facility_idが実際に存在するかを確認（セキュリティ対策）
     const { data: facilityExists, error: facilityCheckError } = await supabase
       .from('facilities')
-      .select('id')
+      .select('id, uuid, service_id')
       .eq('id', facility_id)
       .single()
 
@@ -103,11 +103,19 @@ export async function POST(request: NextRequest) {
     // 施設情報を取得（メール送信用）
     const { data: facilityData } = await supabase
       .from('facility_details')
-      .select('name')
+      .select('name, google_map_url, review_approval_email')
       .eq('id', facility_id)
       .single()
 
     const facilityName = facilityData?.name || '施設'
+    const googleMapUrl = facilityData?.google_map_url || null
+    const reviewApprovalEmail = facilityData?.review_approval_email || null
+
+    // サービス名を取得
+    const { data: serviceData } = facilityExists.service_id
+      ? await supabase.from('services').select('name, code').eq('id', facilityExists.service_id).single()
+      : { data: null }
+    const serviceName = serviceData?.name || ''
 
     // review_checksにレコードを登録（status: 'pending'で登録、トークンは自動生成）
     const { data, error } = await supabase
@@ -165,63 +173,148 @@ export async function POST(request: NextRequest) {
 
     // メール送信（並列実行し、失敗してもアンケート登録は成功とする）
     const sendNotificationEmails = async () => {
+      const adminEmails = getAdminEmails()
+      const starRating = formatStarRating(review_star)
+      const footer = getEmailFooter(serviceName)
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
       const emailPromises = []
 
-      // 1. 管理者通知メール
-      const adminEmails = getAdminEmails()
-      if (adminEmails.length > 0) {
-        const adminEmailBody = `${facilityName} に新しいアンケート回答がありました。
+      // Template 1: アンケート送信者へのThank youメール
+      const userEmailBody = `この度は、${facilityName}への5段階評価アンケートのご協力、誠にありがとうございます。
 
-■ 回答内容
-━━━━━━━━━━━━━━━━━━━━━━━━
-評価: ${formatStarRating(review_star)}
-お名前: ${reviewer_name}様
-メールアドレス: ${email}
-Googleアカウント名: ${google_account_name}
-${feedback ? `
-ご意見・ご感想:
-${feedback}` : ''}
+お預かりしたアンケート内容は、${facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。
 
-■ 次のステップ
-この回答に対するクチコミ確認は、自動的に処理されます。
-確認結果は別途メールでお知らせします。
+お客様の本人確認とクチコミ内容の確認が出来次第、クチコミル事務局より特典をプレゼントいたしますので、今しばらくお待ちくださいませ。
+
+※こちらのメールは自動返信です。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【お客様の送信内容】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■5段階評価アンケート : ${starRating}
+
+■ご意見・ご感想 : ${feedback || ''}
+
+▼▼━━━━━━━お客様の基本情報━━━━━━━▼▼
+
+■お名前 : ${reviewer_name}
+
+■メールアドレス : ${email}
+
+■Googleアカウント名 : ${google_account_name}
+
+■個人情報のお取り扱いについて : 承認済み
+
+${footer}
 `
-
-        emailPromises.push(
-          sendEmail({
-            to: adminEmails,
-            subject: `【新規アンケート回答】${facilityName}`,
-            body: adminEmailBody,
-          }).catch(error => {
-            console.error('Error sending admin notification email:', error)
-          })
-        )
-      }
-
-      // 2. アンケート送信者へのThank youメール
-      const thankYouEmailBody = `${reviewer_name}様
-
-この度は${facilityName}のアンケートにご回答いただき、
-誠にありがとうございます。
-
-お客様からいただいた貴重なご意見は、
-今後のサービス向上に役立たせていただきます。
-
-クチコミの確認が完了しましたら、
-改めてご連絡させていただきます。
-
-今後とも${facilityName}をよろしくお願いいたします。
-`
-
       emailPromises.push(
         sendEmail({
           to: email,
-          subject: `アンケートへのご回答ありがとうございます - ${facilityName}`,
-          body: thankYouEmailBody,
+          subject: `5段階評価アンケートのご協力ありがとうございます。 | ${serviceName}クチコミランキング`,
+          body: userEmailBody,
         }).catch(error => {
           console.error('Error sending thank you email:', error)
         })
       )
+
+      // Template 2/3: 施設管理者への通知メール（BCC: サイト管理者）
+      if (reviewApprovalEmail) {
+        if (starValue >= 3) {
+          // Template 2: 高評価（星3〜5）
+          const facilityHighRatingBody = `※${facilityName}の5段階評価アンケートにご回答がありました。
+
+【${facilityName}】
+${googleMapUrl || ''}
+
+■ お客様の5段階評価アンケートご回答内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- 5段階評価アンケート
+${starRating}
+
+- ご意見・ご感想
+${feedback || ''}
+
+- お名前
+${reviewer_name}
+
+- メールアドレス
+${email}
+
+- Googleアカウント名
+${google_account_name}
+
+- 個人情報のお取り扱いについて
+承認済み
+
+■ 次のステップ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+弊社システムがこちらの回答に該当するGoogleクチコミ投稿を確認出来次第、
+別途メールにてお知らせいたしますので、今しばらくお待ちください。
+
+※このメールは自動送信されています。
+
+${footer}
+`
+          emailPromises.push(
+            sendEmail({
+              to: reviewApprovalEmail,
+              bcc: adminEmails,
+              subject: `${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
+              body: facilityHighRatingBody,
+            }).catch(error => {
+              console.error('Error sending facility high rating email:', error)
+            })
+          )
+        } else {
+          // Template 3: 低評価（星1〜2）
+          const approvalUrl = `${baseUrl}/api/review-checks/${data.id}/facility-approve?token=${data.facility_approval_token}`
+          const facilityLowRatingBody = `※ ${facilityName}の5段階評価アンケートにご回答がありました。
+
+【${facilityName}】
+${googleMapUrl || ''}
+
+■ お客様の5段階評価アンケートご回答内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5段階評価アンケート
+${starRating}
+
+- ご意見・ご感想
+${feedback || ''}
+
+- お名前
+${reviewer_name}
+
+- メールアドレス
+${email}
+
+- Googleアカウント名
+${google_account_name}
+
+- 個人情報のお取り扱いについて
+承認済み
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ こちらのご回答を承認する場合は、以下のリンクをクリックしてください。 ▼
+${approvalUrl}
+
+※このメールは自動送信されています。
+※このリンクは${facilityName}のオーナー様専用の承認リンクですので、第三者への共有はお控えください。
+
+${footer}
+`
+          emailPromises.push(
+            sendEmail({
+              to: reviewApprovalEmail,
+              bcc: adminEmails,
+              subject: `【承認のお願い】${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
+              body: facilityLowRatingBody,
+            }).catch(error => {
+              console.error('Error sending facility low rating email:', error)
+            })
+          )
+        }
+      }
 
       // 全てのメール送信を並列実行
       await Promise.all(emailPromises)

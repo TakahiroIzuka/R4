@@ -34,32 +34,39 @@ interface ReviewCheck {
   reviewer_name: string
   facility_approval_token: string
   review_url: string | null
+  review_star: number | null
 }
 
 // メール送信（Resend API使用、ローカルはSMTPにフォールバック）
 async function sendEmail(
   to: string,
   subject: string,
-  body: string
+  body: string,
+  bcc?: string[]
 ): Promise<boolean> {
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
   const fromEmail = Deno.env.get('EMAIL_FROM') || 'noreply@example.com'
+  const bccRecipients = (bcc || []).filter(Boolean)
 
   // Resend APIキーがある場合はResendを使用
   if (resendApiKey) {
     try {
+      const payload: Record<string, unknown> = {
+        from: fromEmail,
+        to: [to],
+        subject: subject,
+        text: body,
+      }
+      if (bccRecipients.length > 0) {
+        payload.bcc = bccRecipients
+      }
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [to],
-          subject: subject,
-          text: body,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
@@ -106,16 +113,19 @@ async function sendEmail(
     await write('DATA')
     await read()
 
-    const emailContent = [
+    const smtpHeaders = [
       `From: ${fromEmail}`,
       `To: ${to}`,
+    ]
+    if (bccRecipients.length > 0) {
+      smtpHeaders.push(`Bcc: ${bccRecipients.join(', ')}`)
+    }
+    smtpHeaders.push(
       `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
       'MIME-Version: 1.0',
-      'Content-Type: text/plain; charset=UTF-8',
-      '',
-      body,
-      '.',
-    ].join('\r\n')
+      'Content-Type: text/plain; charset=UTF-8'
+    )
+    const emailContent = [...smtpHeaders, '', body, '.'].join('\r\n')
 
     await write(emailContent)
     await read()
@@ -130,7 +140,7 @@ async function sendEmail(
   }
 }
 
-// 施設承認依頼メール送信関数
+// 施設承認依頼メール送信関数（Template 4: Googleクチコミ投稿確認後）
 async function sendFacilityApprovalRequestEmail(
   toEmail: string,
   reviewCheckId: number,
@@ -140,32 +150,58 @@ async function sendFacilityApprovalRequestEmail(
   googleAccountName: string,
   facilityName: string,
   facilityUrl: string | null,
-  reviewUrl: string | null
+  reviewUrl: string | null,
+  reviewStar: number | null,
+  serviceName: string,
+  footer: string,
+  bcc?: string[]
 ): Promise<boolean> {
   const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
   const approvalUrl = `${baseUrl}/api/review-checks/${reviewCheckId}/facility-approve?token=${facilityApprovalToken}`
 
-  const body = `${facilityName} のオーナー様
+  const starRating = reviewStar !== null
+    ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}段階)`
+    : '不明'
 
-新しいクチコミの確認が完了しました。
-以下のリンクから承認をお願いします。
+  const body = `新しいGoogleクチコミ投稿の確認が完了しました。
 
-━━━━━━━━━━━━━━━━━━━━━━━━
-お名前: ${reviewerName} 様
-メールアドレス: ${reviewerEmail}
-Googleアカウント名: ${googleAccountName}
-施設URL: ${facilityUrl || '未設定'}
-クチコミURL: ${reviewUrl || '未取得'}
-━━━━━━━━━━━━━━━━━━━━━━━━
+■ 新しいGoogleクチコミ投稿の内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5段階評価アンケート
+${starRating}
 
-▼ 承認する場合は以下のリンクをクリックしてください
+- お名前
+${reviewerName}
+
+- メールアドレス
+${reviewerEmail}
+
+- Googleアカウント名
+${googleAccountName}
+
+- Google Business Profile（Googleマップ）のURL
+${facilityUrl || ''}
+
+- GoogleクチコミのURL
+${reviewUrl || ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ 承認する場合は、以下のリンクをクリックしてください。 ▼
 ${approvalUrl}
 
 ※このメールは自動送信されています。
-※このリンクは本メールの受信者専用です。第三者への共有はお控えください。
+※このリンクは${facilityName}のオーナー様専用の承認リンクですので、第三者への共有はお控えください。
+
+${footer}
 `
 
-  return sendEmail(toEmail, `【${facilityName}】クチコミ承認のお願い`, body)
+  return sendEmail(
+    toEmail,
+    `【承認のお願い】新しいGoogleクチコミ投稿の確認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
+    body,
+    bcc
+  )
 }
 
 // 既出通知メール送信関数（アンケート送信者へ）
@@ -193,6 +229,61 @@ Googleアカウント名: ${googleAccountName}
 `
 
   return sendEmail(toEmail, `【${facilityName}】クチコミ特典のお知らせ`, body)
+}
+
+// Template 6: 高評価でクチコミ確認できなかった場合のメール送信関数
+async function sendHighRatingReviewNotFoundEmail(
+  toEmail: string,
+  reviewerName: string,
+  facilityName: string,
+  googleAccountName: string,
+  googleMapUrl: string | null,
+  serviceName: string,
+  serviceCode: string,
+  facilityUuid: string | null,
+  giftCodeAmount: number | null,
+  footer: string
+): Promise<boolean> {
+  const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
+  const questionnaireUrl = facilityUuid
+    ? `${baseUrl}/${serviceCode}/questionnaire/${facilityUuid}`
+    : ''
+  const amountText = giftCodeAmount !== null ? String(giftCodeAmount) : '●●●'
+
+  const body = `${reviewerName} 様
+
+この度はお忙しい中、${facilityName}への5段階評価アンケートのご協力、誠にありがとうございます。
+
+クチコミル（${serviceName}クチコミランキング）では、"5段階評価アンケート"と"クチコミ投稿"にご協力していただいた方限定特典として、クチコミル事務局より特典（Amazonギフトカード${amountText}円分）をプレゼントいたしております。
+
+先ほど以下のページで弊社システムが該当するクチコミの照合と本人確認をさせていただいたのですが、${reviewerName} 様（Googleアカウントで登録されているお名前 : ${googleAccountName}）のクチコミとお見受けできる投稿が確認できませんでした。
+
+以下の理由が考えられます :
+- アンケートでご入力されたGoogleアカウント名が一致しない
+- クチコミがまだ公開されていない
+- クチコミを誤って削除された
+
+大変お手数おかけいたしますが、再度${facilityName}への5段階評価アンケートとクチコミ投稿にご協力していただき、該当するクチコミの照合と本人確認が出来次第、クチコミル事務局より特典（Amazonギフトカード${amountText}円分）をプレゼントいたします。
+
+■ 5段階評価アンケートはこちらから : ${questionnaireUrl}
+■ クチコミ投稿はこちらから : ${googleMapUrl || ''}
+
+※ 5段階評価アンケート送信後から1時間以内に、弊社システムが該当するGoogleクチコミの照合と本人確認を致します。その時点で該当するGoogleクチコミの照合と本人確認が出来なかった場合は、特典は適用されませんので、予めご了承ください。
+
+本メールの行き違いで既にクチコミ投稿済みの場合はご容赦ください。
+尚、クチコミへの投稿はお客様の任意となっております。
+
+不明点等あればお気軽にご連絡くださいませ。
+それではお忙しいところ大変お手数おかけいたしますが、ご確認のほど、何卒宜しくお願いします。
+
+${footer}
+`
+
+  return sendEmail(
+    toEmail,
+    `??? | ${serviceName}クチコミランキング`,
+    body
+  )
 }
 
 // エラー通知メール送信関数（アンケート送信者へ）
@@ -342,7 +433,7 @@ serve(async (req) => {
     // review_checksレコードを取得
     const { data: reviewCheck, error: reviewError } = await supabase
       .from('review_checks')
-      .select('id, facility_id, google_account_name, email, reviewer_name, facility_approval_token, review_url')
+      .select('id, facility_id, google_account_name, email, reviewer_name, facility_approval_token, review_url, review_star')
       .eq('id', typedTask.review_check_id)
       .single()
 
@@ -382,6 +473,38 @@ serve(async (req) => {
     }
 
     const googleMapUrl = facilityDetail.google_map_url
+
+    // サービス名・コード・施設UUID・ギフトコード金額を取得（メール用）
+    const { data: facilityInfo } = await supabase
+      .from('facilities')
+      .select('service_id, uuid, gift_code_amount_id')
+      .eq('id', typedReviewCheck.facility_id)
+      .single()
+
+    const { data: serviceData } = facilityInfo?.service_id
+      ? await supabase.from('services').select('name, code').eq('id', facilityInfo.service_id).single()
+      : { data: null }
+    const serviceName = serviceData?.name || ''
+    const serviceCode = serviceData?.code || ''
+    const facilityUuid = facilityInfo?.uuid || null
+
+    const { data: giftAmountData } = facilityInfo?.gift_code_amount_id
+      ? await supabase.from('gift_code_amounts').select('amount').eq('id', facilityInfo.gift_code_amount_id).single()
+      : { data: null }
+    const giftCodeAmount = giftAmountData?.amount ?? null
+
+    const emailFooter = `クチコミル（${serviceName}クチコミランキング）事務局
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+運営会社 : 合同会社Rainmans
+本社 : 兵庫県神戸市中央区港島中町2-3-8
+東京支店 : 東京都杉並区高円寺北3-33-10
+メールアドレス : info@mister-review-ranking.com
+電話番号 : 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+
+    // 管理者メールアドレスを取得（BCC用）
+    const adminEmailsEnv = Deno.env.get('ADMIN_EMAILS') || ''
+    const adminEmails = adminEmailsEnv.split(',').map((e: string) => e.trim()).filter(Boolean)
 
     if (!googleMapUrl) {
       console.log('No google_map_url for facility')
@@ -508,7 +631,7 @@ serve(async (req) => {
         )
       }
 
-      // 施設承認依頼メールを送信
+      // 施設承認依頼メールを送信（Template 4）
       const emailSent = await sendFacilityApprovalRequestEmail(
         reviewApprovalEmail,
         typedReviewCheck.id,
@@ -518,7 +641,11 @@ serve(async (req) => {
         typedReviewCheck.google_account_name,
         facilityDetail.name,
         googleMapUrl,
-        reviewUrl
+        reviewUrl,
+        typedReviewCheck.review_star,
+        serviceName,
+        emailFooter,
+        adminEmails
       )
 
       if (!emailSent) {
@@ -555,12 +682,29 @@ serve(async (req) => {
         .eq('id', review_check_task_id)
 
       // エラーメール送信（アンケート送信者へ）
-      await sendErrorNotificationEmail(
-        typedReviewCheck.email,
-        typedReviewCheck.reviewer_name,
-        facilityDetail.name,
-        googleMapUrl
-      )
+      // 高評価（星3〜5）でクチコミ確認できなかった場合はTemplate 6を送信
+      const questionnaireStar = typedReviewCheck.review_star
+      if (!matched && questionnaireStar !== null && questionnaireStar >= 3) {
+        await sendHighRatingReviewNotFoundEmail(
+          typedReviewCheck.email,
+          typedReviewCheck.reviewer_name,
+          facilityDetail.name,
+          typedReviewCheck.google_account_name,
+          googleMapUrl,
+          serviceName,
+          serviceCode,
+          facilityUuid,
+          giftCodeAmount,
+          emailFooter
+        )
+      } else {
+        await sendErrorNotificationEmail(
+          typedReviewCheck.email,
+          typedReviewCheck.reviewer_name,
+          facilityDetail.name,
+          googleMapUrl
+        )
+      }
 
       // 両方のタスクがfailedかチェック
       const { data: allTasks } = await supabase
