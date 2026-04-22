@@ -27,7 +27,6 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
     : null
   const [formData, setFormData] = useState({
     satisfaction: '',
-    hasGoogleAccount: '',
     feedback: '',
     name: '',
     email: '',
@@ -85,7 +84,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       alert('Googleアカウント名は100文字以内で入力してください')
       return
     }
-    if (formData.satisfaction === '1' || formData.satisfaction === '2' || formData.hasGoogleAccount === 'no') {
+    if (formData.satisfaction === '1' || formData.satisfaction === '2') {
       if (!formData.feedback || !formData.feedback.trim()) {
         alert('ご意見・ご感想を入力してください')
         return
@@ -133,7 +132,6 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
       // 入力項目を初期化
       setFormData({
         satisfaction: '',
-        hasGoogleAccount: '',
         feedback: '',
         name: '',
         email: '',
@@ -238,57 +236,13 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             </div>
           </div>
 
-          {/* 星3,4,5選択時: Googleアカウント */}
+          {/* 星3,4,5選択時: Googleクチコミ投稿 */}
           <div
             className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3 transition-all duration-500 ease-in-out overflow-hidden"
             style={{
               maxHeight: (formData.satisfaction === '3' || formData.satisfaction === '4' || formData.satisfaction === '5') ? '500px' : '0',
               opacity: (formData.satisfaction === '3' || formData.satisfaction === '4' || formData.satisfaction === '5') ? 1 : 0,
               marginBottom: (formData.satisfaction === '3' || formData.satisfaction === '4' || formData.satisfaction === '5') ? '10px' : '0'
-            }}
-          >
-            <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>Googleアカウント（Gmail）をお持ちですか？</span>
-            </label>
-            <div className="md:w-1/2">
-              <div className="flex gap-8 mb-3">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="hasGoogleAccount"
-                    value="yes"
-                    checked={formData.hasGoogleAccount === 'yes'}
-                    onChange={(e) => setFormData({ ...formData, hasGoogleAccount: e.target.value })}
-                    className="mr-2"
-                  />
-                  はい
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="hasGoogleAccount"
-                    value="no"
-                    checked={formData.hasGoogleAccount === 'no'}
-                    onChange={(e) => setFormData({ ...formData, hasGoogleAccount: e.target.value })}
-                    className="mr-2"
-                  />
-                  いいえ
-                </label>
-              </div>
-              <p className="text-sm text-gray-400">
-                ※ Googleアカウントをお持ちでない方は、<a href="https://www.google.com/intl/ja/account/about/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">こちらからGoogleアカウントのホームにアクセス</a>し、「アカウントを作成する」を選択してください。<br />
-                ※ Googleアカウントで登録されているお名前でクチコミが反映されます。
-              </p>
-            </div>
-          </div>
-
-          {/* はい選択時: Googleクチコミ投稿（星1,2の場合は表示しない） */}
-          <div
-            className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3 transition-all duration-500 ease-in-out overflow-hidden"
-            style={{
-              maxHeight: (formData.hasGoogleAccount === 'yes' && formData.satisfaction !== '1' && formData.satisfaction !== '2') ? '500px' : '0',
-              opacity: (formData.hasGoogleAccount === 'yes' && formData.satisfaction !== '1' && formData.satisfaction !== '2') ? 1 : 0,
-              marginBottom: (formData.hasGoogleAccount === 'yes' && formData.satisfaction !== '1' && formData.satisfaction !== '2') ? '10px' : '0'
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
@@ -326,13 +280,13 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             </div>
           </div>
 
-          {/* 星1,2選択時 または いいえ選択時: ご意見・ご感想 */}
+          {/* 星1,2選択時: ご意見・ご感想 */}
           <div
             className="mb-[10px] flex flex-col md:flex-row md:items-stretch gap-3 transition-all duration-500 ease-in-out overflow-hidden"
             style={{
-              maxHeight: (formData.satisfaction === '1' || formData.satisfaction === '2' || formData.hasGoogleAccount === 'no') ? '500px' : '0',
-              opacity: (formData.satisfaction === '1' || formData.satisfaction === '2' || formData.hasGoogleAccount === 'no') ? 1 : 0,
-              marginBottom: (formData.satisfaction === '1' || formData.satisfaction === '2' || formData.hasGoogleAccount === 'no') ? '10px' : '0'
+              maxHeight: (formData.satisfaction === '1' || formData.satisfaction === '2') ? '500px' : '0',
+              opacity: (formData.satisfaction === '1' || formData.satisfaction === '2') ? 1 : 0,
+              marginBottom: (formData.satisfaction === '1' || formData.satisfaction === '2') ? '10px' : '0'
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
