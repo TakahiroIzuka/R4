@@ -110,6 +110,7 @@ serve(async (req) => {
       email,
       reviewerName,
       facilityName,
+      serviceName,
       giftCode,
       giftAmount,
       expiresAt
@@ -122,37 +123,36 @@ serve(async (req) => {
       )
     }
 
-    const formattedAmount = new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY'
-    }).format(giftAmount)
-
     // 有効期限をフォーマット
     const formattedExpiresAt = expiresAt
       ? new Date(expiresAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
       : null
 
+    const footer = `クチコミル（${serviceName}クチコミランキング）事務局
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+運営会社 : 合同会社Rainmans
+本社 : 兵庫県神戸市中央区港島中町2-3-8
+東京支店 : 東京都杉並区高円寺北3-33-10
+メールアドレス : info@mister-review-ranking.com
+電話番号 : 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+
     const body = `${reviewerName} 様
 
-この度は${facilityName}のクチコミ投稿ありがとうございました。
+この度は、${facilityName}への5段階評価アンケートとクチコミ投稿にご協力していただき、誠にありがとうございます。
+クチコミル（${serviceName}クチコミランキング）事務局より感謝の気持ちを込めて、ご協力していただいた方限定特典を用意しましたので、是非お受け取りください。
 
-お礼として、下記のギフトコードをお送りいたします。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▼ Amazonギフトコード（${giftAmount}円分） ▼
 ギフトコード: ${giftCode}
-金額: ${formattedAmount}${formattedExpiresAt ? `
-有効期限: ${formattedExpiresAt}` : ''}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-※本コードは1回限り有効です。${formattedExpiresAt ? '' : `
-※有効期限にご注意ください。`}
-
-今後ともよろしくお願いいたします。
+${formattedExpiresAt ? `
+※有効期限 : ${formattedExpiresAt}
+` : ''}
+${footer}
 `
 
     const success = await sendEmail(
       email,
-      `クチコミ投稿ありがとうございます - ギフトコードのご案内`,
+      `${serviceName}クチコミランキング事務局からの限定特典のお知らせ`,
       body
     )
 

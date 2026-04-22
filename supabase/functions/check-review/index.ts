@@ -281,7 +281,7 @@ ${footer}
 
   return sendEmail(
     toEmail,
-    `??? | ${serviceName}クチコミランキング`,
+    `クチコミル（${serviceName}クチコミランキング）事務局からのお知らせ`,
     body
   )
 }
