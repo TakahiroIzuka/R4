@@ -336,7 +336,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
             }}
           >
             <label className="md:w-1/2 text-black text-xs md:text-sm text-center flex items-center justify-center p-3" style={{ backgroundColor: 'rgb(234, 227, 219)' }}>
-              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="inline-block ml-1 px-2 py-1 rounded text-white text-xs cursor-pointer" style={{ backgroundColor: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button><span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
+              <span>{facilityName}への率直なご意見、ご感想をいただけませんか？お預かりしたアンケート内容は、{facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。<span className="ml-2 px-2 py-1 rounded text-white text-xs" style={{ backgroundColor: 'rgb(235, 106, 82)' }}>必須</span></span>
             </label>
             <div className="md:w-1/2">
               <textarea
@@ -348,6 +348,7 @@ export default function QuestionnaireForm({ facilityId, facilityName, genreColor
               <p className="text-sm text-gray-400 mt-2">
                 ※ 出来るだけ詳しくご記載いただければ幸いです。
               </p>
+              <button type="button" onClick={() => { setReviewAgreed(false); setShowReviewModal(true) }} className="mt-2 text-xs cursor-pointer" style={{ color: 'rgb(10, 108, 255)' }}>Googleクチコミ投稿はこちらから</button>
             </div>
           </div>
         </div>
