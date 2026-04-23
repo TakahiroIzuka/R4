@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 interface FacilityEmailPreviewProps {
+  facilityId: number
   facilityName: string
   serviceName: string
   serviceCode: string
@@ -11,9 +12,10 @@ interface FacilityEmailPreviewProps {
   facilityUuid: string | null
   baseUrl: string
   currentUserType?: 'admin' | 'user'
+  emailLanguage?: string
 }
 
-const P = {
+const PJa = {
   reviewerName: '{お名前}',
   email: '{メールアドレス}',
   googleAccountName: '{Googleアカウント名}',
@@ -26,7 +28,21 @@ const P = {
   adminDashboardLink: '{管理画面リンク}',
 }
 
+const PEn = {
+  reviewerName: '{Name}',
+  email: '{Email Address}',
+  googleAccountName: '{Google Account Name}',
+  starRating: '{Rating}',
+  feedback: '{Comments / Feedback}',
+  reviewUrl: '{Google Review URL}',
+  giftCode: '{Gift Code}',
+  expiresAt: '{Expiry Date}',
+  approvalLink: '{Approval Link}',
+  adminDashboardLink: '{Admin Panel Link}',
+}
+
 export default function FacilityEmailPreview({
+  facilityId: _facilityId,
   facilityName,
   serviceName,
   serviceCode,
@@ -35,10 +51,14 @@ export default function FacilityEmailPreview({
   facilityUuid,
   baseUrl,
   currentUserType = 'user',
+  emailLanguage = 'ja',
 }: FacilityEmailPreviewProps) {
   const [activeTab, setActiveTab] = useState(0)
 
-  const footer = `クチコミル（${serviceName}クチコミランキング）事務局
+  const isEn = emailLanguage === 'en'
+  const P = isEn ? PEn : PJa
+
+  const jaFooter = `クチコミル（${serviceName}クチコミランキング）事務局
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 運営会社 : 合同会社Rainmans
 本社 : 兵庫県神戸市中央区港島中町2-3-8
@@ -47,13 +67,24 @@ export default function FacilityEmailPreview({
 電話番号 : 050-8893-2668
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 
-  const mapUrl = googleMapUrl || '{GoogleマップURL}'
+  const enFooter = `Kuchikomiru (${serviceName} Review Ranking) Secretariat
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company: Rainmans LLC
+Head Office: 2-3-8 Minatojimanakacho, Chuo-ku, Kobe, Hyogo
+Tokyo Branch: 3-33-10 Koeji Kita, Suginami-ku, Tokyo
+Email: info@mister-review-ranking.com
+Phone: 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+
+  const footer = isEn ? enFooter : jaFooter
+
+  const mapUrl = googleMapUrl || (isEn ? '{Google Maps URL}' : '{GoogleマップURL}')
   const questionnaireUrl = facilityUuid
     ? `${baseUrl}/${serviceCode}/questionnaire/${facilityUuid}`
-    : `${baseUrl}/${serviceCode}/questionnaire/{施設UUID}`
+    : `${baseUrl}/${serviceCode}/questionnaire/${isEn ? '{facility UUID}' : '{施設UUID}'}`
   const amountText = giftCodeAmount !== null ? `${giftCodeAmount}` : '●●●'
 
-  const emails = [
+  const jaEmails = [
     {
       label: '#1 回答者サンクス',
       trigger: 'アンケート送信直後（全評価共通）',
@@ -289,7 +320,248 @@ ${footer}`,
     },
   ]
 
-  const visibleEmails = emails.filter(e => e.label !== '#6 施設管理者承認後' || currentUserType === 'admin')
+  const enEmails = [
+    {
+      label: '#1 Thank You',
+      trigger: 'Immediately after survey submission (all ratings)',
+      to: 'Survey respondent',
+      subject: `Thank you for your cooperation with our 5-star rating survey. | ${serviceName} Review Ranking`,
+      body: `Thank you very much for taking the time to complete the 5-star rating survey for ${facilityName}.
+
+The survey feedback you provided will be shared with ${facilityName} and used to improve customer satisfaction going forward.
+
+Once we have verified your identity and confirmed the content of your review, the Kuchikomiru Secretariat will send you your exclusive benefit. We appreciate your patience.
+
+※ This email is an automated response.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【Your Submitted Information】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 5-Star Rating Survey: ${P.starRating}
+
+■ Comments / Feedback: ${P.feedback}
+
+▼▼━━━━━━━ Your Basic Information ━━━━━━━▼▼
+
+■ Name: ${P.reviewerName}
+
+■ Email Address: ${P.email}
+
+■ Google Account Name: ${P.googleAccountName}
+
+■ Privacy Policy: Agreed
+
+${footer}`,
+    },
+    {
+      label: '#2 High Rating – Facility Mgr',
+      trigger: 'Immediately after survey submission (high rating ★3–5)',
+      to: 'Facility Manager (BCC: Site Administrator)',
+      subject: `A response has been received for ${facilityName}'s 5-star rating survey. | Kuchikomiru (${serviceName} Review Ranking)`,
+      body: `※ A response has been received for ${facilityName}'s 5-star rating survey.
+
+【${facilityName}】
+${mapUrl}
+
+■ Customer's Survey Response
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- 5-Star Rating Survey
+${P.starRating}
+
+- Comments / Feedback
+${P.feedback}
+
+- Name
+${P.reviewerName}
+
+- Email Address
+${P.email}
+
+- Google Account Name
+${P.googleAccountName}
+
+- Privacy Policy
+Agreed
+
+■ Next Steps
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Once our system has located the corresponding Google review for this response, we will notify you separately. Please wait a moment.
+
+※ This email is sent automatically.
+
+${footer}`,
+    },
+    {
+      label: '#3 Low Rating – Facility Mgr',
+      trigger: 'Immediately after survey submission (low rating ★1–2)',
+      to: 'Facility Manager (BCC: Site Administrator)',
+      subject: `[Approval Request] A response has been received for ${facilityName}'s 5-star rating survey. | Kuchikomiru (${serviceName} Review Ranking)`,
+      body: `※ A response has been received for ${facilityName}'s 5-star rating survey.
+
+【${facilityName}】
+${mapUrl}
+
+■ Customer's Survey Response
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${P.starRating}
+
+- Comments / Feedback
+${P.feedback}
+
+- Name
+${P.reviewerName}
+
+- Email Address
+${P.email}
+
+- Google Account Name
+${P.googleAccountName}
+
+- Privacy Policy
+Agreed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve this response, please click the link below. ▼
+${P.approvalLink}
+
+※ This email is sent automatically.
+※ This link is exclusively for the owner of ${facilityName}. Please do not share it with third parties.
+
+${footer}`,
+    },
+    {
+      label: '#4 After Google Review',
+      trigger: 'After Google review verification (★3–5 and name matched)',
+      to: 'Facility Manager (BCC: Site Administrator)',
+      subject: `[Approval Request] Notification of Completion of New Google Review Verification | Kuchikomiru (${serviceName} Review Ranking)`,
+      body: `Verification of the new Google review post has been completed.
+
+■ New Google Review Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${P.starRating}
+
+- Name
+${P.reviewerName}
+
+- Email Address
+${P.email}
+
+- Google Account Name
+${P.googleAccountName}
+
+- Google Business Profile (Google Maps) URL
+${mapUrl}
+
+- Google Review URL
+${P.reviewUrl}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve, please click the link below. ▼
+${P.approvalLink}
+
+※ This email is sent automatically.
+※ This link is exclusively for the owner of ${facilityName}. Please do not share it with third parties.
+
+${footer}`,
+    },
+    {
+      label: '#5 Review Not Found',
+      trigger: 'Google review not found (high rating ★3–5, post not found)',
+      to: 'Survey respondent',
+      subject: `Notice from Kuchikomiru (${serviceName} Review Ranking) Secretariat`,
+      body: `Dear ${P.reviewerName},
+
+Thank you for taking the time out of your busy schedule to complete the 5-star rating survey for ${facilityName}.
+
+At Kuchikomiru (${serviceName} Review Ranking), we offer an exclusive benefit (Amazon Gift Card worth ${amountText} yen) to customers who have cooperated with both the "5-star rating survey" and a "Google review post."
+
+We have attempted to verify the corresponding review and confirm your identity, but we were unable to find a review post that appears to match ${P.reviewerName} (Google Account Name: ${P.googleAccountName}).
+
+Possible reasons include:
+- The Google Account Name entered in the survey does not match
+- The review has not yet been published
+- The review was accidentally deleted
+
+We apologize for the inconvenience, but we kindly ask that you submit the 5-star rating survey and Google review for ${facilityName} once more. Once we are able to verify the corresponding review and confirm your identity, the Kuchikomiru Secretariat will send you an exclusive benefit (Amazon Gift Card worth ${amountText} yen).
+
+■ Submit the 5-star rating survey here: ${questionnaireUrl}
+■ Post a Google review here: ${mapUrl}
+
+※ Our system will attempt to verify the corresponding Google review and confirm your identity within 1 hour of survey submission. If verification cannot be completed at that time, the benefit will not be applied. Please note this in advance.
+
+If you have already posted your review and this email has crossed with your submission, we sincerely apologize.
+Please note that posting a review is entirely at your discretion.
+
+If you have any questions, please feel free to contact us.
+We apologize for the inconvenience and appreciate your understanding.
+
+${footer}`,
+    },
+    {
+      label: '#6 After Facility Approval',
+      trigger: 'After facility manager clicks approval link',
+      to: 'Site Administrator',
+      subject: `[Admin Approval Request] Notification of Review Approval Completed by Facility Owner of ${facilityName} | Kuchikomiru (${serviceName} Review Ranking)`,
+      body: `The review approval by the facility owner of ${facilityName} has been completed.
+
+■ New Google Review Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${P.starRating}
+
+- Name
+${P.reviewerName}
+
+- Email Address
+${P.email}
+
+- Google Account Name
+${P.googleAccountName}
+
+- Google Business Profile (Google Maps) URL
+${mapUrl}
+
+- Google Review URL
+${P.reviewUrl}
+
+- Facility Approval Status: Completed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve, please access the admin panel and complete the final approval. ▼
+${P.adminDashboardLink}
+
+${footer}`,
+    },
+    {
+      label: '#7 Gift Code',
+      trigger: 'After site administrator final approval',
+      to: 'Survey respondent',
+      subject: `Notice of Exclusive Benefit from ${serviceName} Review Ranking Secretariat`,
+      body: `Dear ${P.reviewerName},
+
+Thank you very much for your cooperation with the 5-star rating survey and Google review post for ${facilityName}.
+As a token of our gratitude, the Kuchikomiru (${serviceName} Review Ranking) Secretariat has prepared an exclusive benefit for those who participated. Please accept it with our sincere thanks.
+
+▼ Amazon Gift Code (worth ${amountText} yen) ▼
+Gift Code: ${P.giftCode}
+
+※ Expiry Date: ${P.expiresAt}
+
+${footer}`,
+    },
+  ]
+
+  const emails = isEn ? enEmails : jaEmails
+  const visibleEmails = emails.filter((_, i) => {
+    const label = isEn ? enEmails[i]?.label : jaEmails[i]?.label
+    return label !== '#6 施設管理者承認後' && label !== '#6 After Facility Approval'
+      ? true
+      : currentUserType === 'admin'
+  })
 
   return (
     <div className="mt-10">
@@ -323,7 +595,7 @@ ${footer}`,
         {/* メタ情報 */}
         <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
           <div className="flex gap-2 text-sm">
-            <span className="text-gray-500 w-20 shrink-0">件名</span>
+            <span className="text-gray-500 w-20 shrink-0">{isEn ? 'Subject' : '件名'}</span>
             <span className="text-gray-700 font-medium">{visibleEmails[activeTab]?.subject}</span>
           </div>
         </div>

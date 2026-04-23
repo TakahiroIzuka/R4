@@ -115,6 +115,7 @@ export default async function EditFacilityPage({ params }: PageProps) {
         logo={logoWithUrl}
       />
       <FacilityEmailPreview
+        facilityId={facility.id}
         facilityName={detail?.name || ''}
         serviceName={service?.name || ''}
         serviceCode={service?.code || ''}
@@ -123,6 +124,7 @@ export default async function EditFacilityPage({ params }: PageProps) {
         facilityUuid={facility.uuid || null}
         baseUrl={process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}
         currentUserType="admin"
+        emailLanguage={facility.email_language || 'ja'}
       />
     </div>
   )

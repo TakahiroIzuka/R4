@@ -44,6 +44,7 @@ interface InitialFacilityData {
   area_id?: number
   company_id?: number
   gift_code_amount_id?: number
+  email_language?: string
   uuid?: string
   detail?: FacilityDetail | FacilityDetail[]
 }
@@ -199,6 +200,7 @@ export default function FacilityForm({
   const [googleMapUrl, setGoogleMapUrl] = useState(detail.google_map_url || '')
   const [googlePlaceId, setGooglePlaceId] = useState(detail.google_place_id || '')
   const [reviewApprovalEmail, setReviewApprovalEmail] = useState(detail.review_approval_email || '')
+  const [emailLanguage, setEmailLanguage] = useState(initialData?.email_language || 'ja')
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -353,7 +355,8 @@ export default function FacilityForm({
               prefecture_id: parseInt(String(prefectureId)),
               area_id: areaId ? parseInt(String(areaId)) : null,
               company_id: companyId ? parseInt(String(companyId)) : null,
-              gift_code_amount_id: giftCodeAmountId ? parseInt(String(giftCodeAmountId)) : null
+              gift_code_amount_id: giftCodeAmountId ? parseInt(String(giftCodeAmountId)) : null,
+              email_language: emailLanguage
             })
             .eq('id', initialData.id)
 
@@ -481,7 +484,8 @@ export default function FacilityForm({
             prefecture_id: parseInt(String(prefectureId)),
             area_id: areaId ? parseInt(String(areaId)) : null,
             company_id: companyId ? parseInt(String(companyId)) : null,
-            gift_code_amount_id: giftCodeAmountId ? parseInt(String(giftCodeAmountId)) : null
+            gift_code_amount_id: giftCodeAmountId ? parseInt(String(giftCodeAmountId)) : null,
+            email_language: emailLanguage
           })
           .select()
           .single()
@@ -1014,6 +1018,39 @@ export default function FacilityForm({
                   />
                   <p className="mt-1 text-xs text-gray-500">
                     レビュー投稿確認後の承認メールの送信先メールアドレス
+                  </p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    メール送信言語
+                  </label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="emailLanguage"
+                        value="ja"
+                        checked={emailLanguage === 'ja'}
+                        onChange={() => setEmailLanguage('ja')}
+                        className="accent-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">日本語</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="emailLanguage"
+                        value="en"
+                        checked={emailLanguage === 'en'}
+                        onChange={() => setEmailLanguage('en')}
+                        className="accent-blue-600"
+                      />
+                      <span className="text-sm text-gray-700">English</span>
+                    </label>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    送信されるメール本文の言語を選択してください
                   </p>
                 </div>
               </>

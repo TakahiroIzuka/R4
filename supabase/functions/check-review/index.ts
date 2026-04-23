@@ -154,16 +154,50 @@ async function sendFacilityApprovalRequestEmail(
   reviewStar: number | null,
   serviceName: string,
   footer: string,
-  bcc?: string[]
+  bcc?: string[],
+  isEn?: boolean
 ): Promise<boolean> {
   const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
   const approvalUrl = `${baseUrl}/api/review-checks/${reviewCheckId}/facility-approve?token=${facilityApprovalToken}`
 
   const starRating = reviewStar !== null
-    ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}段階)`
-    : '不明'
+    ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}${isEn ? ' stars' : '段階'})`
+    : isEn ? 'Unknown' : '不明'
 
-  const body = `新しいGoogleクチコミ投稿の確認が完了しました。
+  const body = isEn
+    ? `Verification of the new Google review post has been completed.
+
+■ New Google Review Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${starRating}
+
+- Name
+${reviewerName}
+
+- Email Address
+${reviewerEmail}
+
+- Google Account Name
+${googleAccountName}
+
+- Google Business Profile (Google Maps) URL
+${facilityUrl || ''}
+
+- Google Review URL
+${reviewUrl || ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve, please click the link below. ▼
+${approvalUrl}
+
+※ This email is sent automatically.
+※ This link is exclusively for the owner of ${facilityName}. Please do not share it with third parties.
+
+${footer}
+`
+    : `新しいGoogleクチコミ投稿の確認が完了しました。
 
 ■ 新しいGoogleクチコミ投稿の内容
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,7 +232,9 @@ ${footer}
 
   return sendEmail(
     toEmail,
-    `【承認のお願い】新しいGoogleクチコミ投稿の確認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
+    isEn
+      ? `[Approval Request] Notification of Completion of New Google Review Verification | Kuchikomiru (${serviceName} Review Ranking)`
+      : `【承認のお願い】新しいGoogleクチコミ投稿の確認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
     body,
     bcc
   )
@@ -242,7 +278,8 @@ async function sendHighRatingReviewNotFoundEmail(
   serviceCode: string,
   facilityUuid: string | null,
   giftCodeAmount: number | null,
-  footer: string
+  footer: string,
+  isEn?: boolean
 ): Promise<boolean> {
   const baseUrl = Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'
   const questionnaireUrl = facilityUuid
@@ -250,7 +287,36 @@ async function sendHighRatingReviewNotFoundEmail(
     : ''
   const amountText = giftCodeAmount !== null ? String(giftCodeAmount) : '●●●'
 
-  const body = `${reviewerName} 様
+  const body = isEn
+    ? `Dear ${reviewerName},
+
+Thank you for taking the time out of your busy schedule to complete the 5-star rating survey for ${facilityName}.
+
+At Kuchikomiru (${serviceName} Review Ranking), we offer an exclusive benefit (Amazon Gift Card worth ${amountText} yen) to customers who have cooperated with both the "5-star rating survey" and a "Google review post."
+
+We have attempted to verify the corresponding review and confirm your identity, but we were unable to find a review post that appears to match ${reviewerName} (Google Account Name: ${googleAccountName}).
+
+Possible reasons include:
+- The Google Account Name entered in the survey does not match
+- The review has not yet been published
+- The review was accidentally deleted
+
+We apologize for the inconvenience, but we kindly ask that you submit the 5-star rating survey and Google review for ${facilityName} once more. Once we are able to verify the corresponding review and confirm your identity, the Kuchikomiru Secretariat will send you an exclusive benefit (Amazon Gift Card worth ${amountText} yen).
+
+■ Submit the 5-star rating survey here: ${questionnaireUrl}
+■ Post a Google review here: ${googleMapUrl || ''}
+
+※ Our system will attempt to verify the corresponding Google review and confirm your identity within 1 hour of survey submission. If verification cannot be completed at that time, the benefit will not be applied. Please note this in advance.
+
+If you have already posted your review and this email has crossed with your submission, we sincerely apologize.
+Please note that posting a review is entirely at your discretion.
+
+If you have any questions, please feel free to contact us.
+We apologize for the inconvenience and appreciate your understanding.
+
+${footer}
+`
+    : `${reviewerName} 様
 
 この度はお忙しい中、${facilityName}への5段階評価アンケートのご協力、誠にありがとうございます。
 
@@ -281,7 +347,9 @@ ${footer}
 
   return sendEmail(
     toEmail,
-    `クチコミル（${serviceName}クチコミランキング）事務局からのお知らせ`,
+    isEn
+      ? `Notice from Kuchikomiru (${serviceName} Review Ranking) Secretariat`
+      : `クチコミル（${serviceName}クチコミランキング）事務局からのお知らせ`,
     body
   )
 }
@@ -477,7 +545,7 @@ serve(async (req) => {
     // サービス名・コード・施設UUID・ギフトコード金額を取得（メール用）
     const { data: facilityInfo } = await supabase
       .from('facilities')
-      .select('service_id, uuid, gift_code_amount_id')
+      .select('service_id, uuid, gift_code_amount_id, email_language')
       .eq('id', typedReviewCheck.facility_id)
       .single()
 
@@ -487,13 +555,24 @@ serve(async (req) => {
     const serviceName = serviceData?.name || ''
     const serviceCode = serviceData?.code || ''
     const facilityUuid = facilityInfo?.uuid || null
+    const emailLanguage = facilityInfo?.email_language || 'ja'
+    const isEn = emailLanguage === 'en'
 
     const { data: giftAmountData } = facilityInfo?.gift_code_amount_id
       ? await supabase.from('gift_code_amounts').select('amount').eq('id', facilityInfo.gift_code_amount_id).single()
       : { data: null }
     const giftCodeAmount = giftAmountData?.amount ?? null
 
-    const emailFooter = `クチコミル（${serviceName}クチコミランキング）事務局
+    const emailFooter = isEn
+      ? `Kuchikomiru (${serviceName} Review Ranking) Secretariat
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company: Rainmans LLC
+Head Office: 2-3-8 Minatojimanakacho, Chuo-ku, Kobe, Hyogo
+Tokyo Branch: 3-33-10 Koeji Kita, Suginami-ku, Tokyo
+Email: info@mister-review-ranking.com
+Phone: 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+      : `クチコミル（${serviceName}クチコミランキング）事務局
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 運営会社 : 合同会社Rainmans
 本社 : 兵庫県神戸市中央区港島中町2-3-8
@@ -645,7 +724,8 @@ serve(async (req) => {
         typedReviewCheck.review_star,
         serviceName,
         emailFooter,
-        adminEmails
+        adminEmails,
+        isEn
       )
 
       if (!emailSent) {
@@ -695,7 +775,8 @@ serve(async (req) => {
           serviceCode,
           facilityUuid,
           giftCodeAmount,
-          emailFooter
+          emailFooter,
+          isEn
         )
       } else {
         await sendErrorNotificationEmail(
