@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import FacilityForm from '@/components/management/FacilityForm'
+import FacilityEmailPreview from '@/components/management/FacilityEmailPreview'
 
 interface PageProps {
   params: Promise<{
@@ -94,6 +95,10 @@ export default async function EditFacilityPage({ params }: PageProps) {
     supabase.from('gift_code_amounts').select('id, amount').order('amount', { ascending: true })
   ])
 
+  const detail = Array.isArray(facility.detail) ? facility.detail[0] : facility.detail
+  const service = (services || []).find(s => s.id === facility.service_id)
+  const giftAmount = (giftCodeAmounts || []).find(g => g.id === facility.gift_code_amount_id)?.amount ?? null
+
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">施設を編集</h1>
@@ -108,6 +113,18 @@ export default async function EditFacilityPage({ params }: PageProps) {
         currentUserType="admin"
         images={imagesWithUrls}
         logo={logoWithUrl}
+      />
+      <FacilityEmailPreview
+        facilityId={facility.id}
+        facilityName={detail?.name || ''}
+        serviceName={service?.name || ''}
+        serviceCode={service?.code || ''}
+        googleMapUrl={detail?.google_map_url || null}
+        giftCodeAmount={giftAmount}
+        facilityUuid={facility.uuid || null}
+        baseUrl={process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}
+        currentUserType="admin"
+        emailLanguage={facility.email_language || 'ja'}
       />
     </div>
   )

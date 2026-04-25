@@ -49,7 +49,9 @@ export async function POST(
         facility:facilities(
           id,
           gift_code_amount_id,
-          detail:facility_details!facility_id(name)
+          email_language,
+          detail:facility_details!facility_id(name),
+          service:services!service_id(name)
         )
       `)
       .eq('id', reviewCheckId)
@@ -103,7 +105,9 @@ export async function POST(
 
     const facility = reviewCheck.facility
     const facilityName = facility?.detail?.[0]?.name || facility?.detail?.name || '施設'
+    const serviceName = facility?.service?.name || ''
     const giftCodeAmountId = facility?.gift_code_amount_id
+    const emailLanguage = facility?.email_language || 'ja'
 
     // ギフトコード処理
     let giftCodeStatus = 'unsent'
@@ -203,9 +207,11 @@ export async function POST(
               email: reviewCheck.email,
               reviewerName: reviewCheck.reviewer_name,
               facilityName,
+              serviceName,
               giftCode: claimedCode.code,
               giftAmount,
-              expiresAt: claimedCode.expires_at
+              expiresAt: claimedCode.expires_at,
+              language: emailLanguage
             }),
           })
 

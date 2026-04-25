@@ -110,9 +110,11 @@ serve(async (req) => {
       email,
       reviewerName,
       facilityName,
+      serviceName,
       giftCode,
       giftAmount,
-      expiresAt
+      expiresAt,
+      language
     } = await req.json()
 
     if (!email || !giftCode || !giftAmount) {
@@ -122,37 +124,62 @@ serve(async (req) => {
       )
     }
 
-    const formattedAmount = new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY'
-    }).format(giftAmount)
+    const isEn = language === 'en'
 
     // 有効期限をフォーマット
     const formattedExpiresAt = expiresAt
-      ? new Date(expiresAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+      ? new Date(expiresAt).toLocaleDateString(isEn ? 'en-US' : 'ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
       : null
 
-    const body = `${reviewerName} 様
+    const footer = isEn
+      ? `Kuchikomiru (${serviceName} Review Ranking) Secretariat
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company: Rainmans LLC
+Head Office: 2-3-8 Minatojimanakacho, Chuo-ku, Kobe, Hyogo
+Tokyo Branch: 3-33-10 Koeji Kita, Suginami-ku, Tokyo
+Email: info@mister-review-ranking.com
+Phone: 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+      : `クチコミル（${serviceName}クチコミランキング）事務局
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+運営会社 : 合同会社Rainmans
+本社 : 兵庫県神戸市中央区港島中町2-3-8
+東京支店 : 東京都杉並区高円寺北3-33-10
+メールアドレス : info@mister-review-ranking.com
+電話番号 : 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 
-この度は${facilityName}のクチコミ投稿ありがとうございました。
+    const body = isEn
+      ? `Dear ${reviewerName},
 
-お礼として、下記のギフトコードをお送りいたします。
+Thank you very much for your cooperation with the 5-star rating survey and Google review post for ${facilityName}.
+As a token of our gratitude, the Kuchikomiru (${serviceName} Review Ranking) Secretariat has prepared an exclusive benefit for those who participated. Please accept it with our sincere thanks.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+▼ Amazon Gift Code (worth ${giftAmount} yen) ▼
+Gift Code: ${giftCode}
+${formattedExpiresAt ? `
+※ Expiry Date: ${formattedExpiresAt}
+` : ''}
+${footer}
+`
+      : `${reviewerName} 様
+
+この度は、${facilityName}への5段階評価アンケートとクチコミ投稿にご協力していただき、誠にありがとうございます。
+クチコミル（${serviceName}クチコミランキング）事務局より感謝の気持ちを込めて、ご協力していただいた方限定特典を用意しましたので、是非お受け取りください。
+
+▼ Amazonギフトコード（${giftAmount}円分） ▼
 ギフトコード: ${giftCode}
-金額: ${formattedAmount}${formattedExpiresAt ? `
-有効期限: ${formattedExpiresAt}` : ''}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-※本コードは1回限り有効です。${formattedExpiresAt ? '' : `
-※有効期限にご注意ください。`}
-
-今後ともよろしくお願いいたします。
+${formattedExpiresAt ? `
+※有効期限 : ${formattedExpiresAt}
+` : ''}
+${footer}
 `
 
     const success = await sendEmail(
       email,
-      `クチコミ投稿ありがとうございます - ギフトコードのご案内`,
+      isEn
+        ? `Notice of Exclusive Benefit from ${serviceName} Review Ranking Secretariat`
+        : `${serviceName}クチコミランキング事務局からの限定特典のお知らせ`,
       body
     )
 

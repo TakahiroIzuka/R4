@@ -117,8 +117,11 @@ serve(async (req) => {
       reviewUrl,
       serviceId,
       serviceName,
-      reviewStar
+      reviewStar,
+      language
     } = await req.json()
+
+    const isEn = language === 'en'
 
     // 環境変数からADMIN_EMAILSを取得
     const adminEmailsEnv = Deno.env.get('ADMIN_EMAILS') || ''
@@ -136,10 +139,19 @@ serve(async (req) => {
     const reviewDetailUrl = `${baseUrl}/admin-management/reviews/${reviewCheckId}/edit`
 
     const starRating = reviewStar !== null && reviewStar !== undefined
-      ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}段階)`
-      : '不明'
+      ? `${'★'.repeat(reviewStar)}${'☆'.repeat(5 - reviewStar)} (${reviewStar}${isEn ? ' stars' : '段階'})`
+      : isEn ? 'Unknown' : '不明'
 
-    const footer = `クチコミル（${serviceName}クチコミランキング）事務局
+    const footer = isEn
+      ? `Kuchikomiru (${serviceName} Review Ranking) Secretariat
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company: Rainmans LLC
+Head Office: 2-3-8 Minatojimanakacho, Chuo-ku, Kobe, Hyogo
+Tokyo Branch: 3-33-10 Koeji Kita, Suginami-ku, Tokyo
+Email: info@mister-review-ranking.com
+Phone: 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+      : `クチコミル（${serviceName}クチコミランキング）事務局
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 運営会社 : 合同会社Rainmans
 本社 : 兵庫県神戸市中央区港島中町2-3-8
@@ -148,7 +160,38 @@ serve(async (req) => {
 電話番号 : 050-8893-2668
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 
-    const body = `${facilityName}の施設オーナーによるクチコミ承認が完了しました。
+    const body = isEn
+      ? `The review approval by the facility owner of ${facilityName} has been completed.
+
+■ New Google Review Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${starRating}
+
+- Name
+${reviewerName}
+
+- Email Address
+${reviewerEmail}
+
+- Google Account Name
+${googleAccountName}
+
+- Google Business Profile (Google Maps) URL
+${facilityUrl || ''}
+
+- Google Review URL
+${reviewUrl || ''}
+
+- Facility Approval Status: Completed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve, please access the admin panel and complete the final approval. ▼
+${reviewDetailUrl}
+
+${footer}
+`
+      : `${facilityName}の施設オーナーによるクチコミ承認が完了しました。
 
 ■ 新しいGoogleクチコミ投稿の内容
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -184,7 +227,9 @@ ${footer}
       adminEmails.map((email: string) =>
         sendEmail(
           email,
-          `【管理者承認依頼】${facilityName}の施設オーナーによるクチコミ承認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
+          isEn
+            ? `[Admin Approval Request] Notification of Review Approval Completed by Facility Owner of ${facilityName} | Kuchikomiru (${serviceName} Review Ranking)`
+            : `【管理者承認依頼】${facilityName}の施設オーナーによるクチコミ承認完了のお知らせ | クチコミル（${serviceName}クチコミランキング）`,
           body
         )
       )

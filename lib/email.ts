@@ -181,3 +181,17 @@ export function getEmailFooter(serviceName: string): string {
 電話番号 : 050-8893-2668
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
 }
+
+/**
+ * 英語メールフッターを取得
+ */
+export function getEmailFooterEn(serviceName: string): string {
+  return `Kuchikomiru (${serviceName} Review Ranking) Secretariat
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company: Rainmans LLC
+Head Office: 2-3-8 Minatojimanakacho, Chuo-ku, Kobe, Hyogo
+Tokyo Branch: 3-33-10 Koeji Kita, Suginami-ku, Tokyo
+Email: info@mister-review-ranking.com
+Phone: 050-8893-2668
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+}

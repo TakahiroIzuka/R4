@@ -13,7 +13,8 @@ async function sendAdminApprovalRequestEmail(
   reviewUrl: string | null,
   serviceId: number,
   serviceName: string,
-  reviewStar: number | null
+  reviewStar: number | null,
+  language: string
 ): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -44,6 +45,7 @@ async function sendAdminApprovalRequestEmail(
           serviceId,
           serviceName,
           reviewStar,
+          language,
         }),
       }
     )
@@ -91,7 +93,7 @@ export async function POST(
         is_owner_approved,
         review_url,
         review_star,
-        facility:facilities!facility_id(service_id)
+        facility:facilities!facility_id(service_id, email_language)
       `)
       .eq('id', reviewCheckId)
       .single()
@@ -146,6 +148,7 @@ export async function POST(
       ? reviewCheck.facility[0]
       : reviewCheck.facility
     const serviceId = facility?.service_id
+    const emailLanguage = facility?.email_language || 'ja'
 
     if (!serviceId) {
       console.error('Service ID not found for facility')
@@ -172,7 +175,8 @@ export async function POST(
       reviewCheck.review_url,
       serviceId,
       serviceName,
-      reviewCheck.review_star ?? null
+      reviewCheck.review_star ?? null,
+      emailLanguage
     )
 
     if (!emailSent) {

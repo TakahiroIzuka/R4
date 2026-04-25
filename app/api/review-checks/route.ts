@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendEmail, getAdminEmails, formatStarRating, getEmailFooter } from '@/lib/email'
+import { sendEmail, getAdminEmails, formatStarRating, getEmailFooter, getEmailFooterEn } from '@/lib/email'
 
 // HTMLタグを除去してXSS攻撃を防ぐ
 function sanitizeInput(input: string): string {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     // 5. facility_idが実際に存在するかを確認（セキュリティ対策）
     const { data: facilityExists, error: facilityCheckError } = await supabase
       .from('facilities')
-      .select('id, uuid, service_id')
+      .select('id, uuid, service_id, email_language')
       .eq('id', facility_id)
       .single()
 
@@ -116,6 +116,8 @@ export async function POST(request: NextRequest) {
       ? await supabase.from('services').select('name, code').eq('id', facilityExists.service_id).single()
       : { data: null }
     const serviceName = serviceData?.name || ''
+    const emailLanguage = facilityExists.email_language || 'ja'
+    const isEn = emailLanguage === 'en'
 
     // review_checksにレコードを登録（status: 'pending'で登録、トークンは自動生成）
     const { data, error } = await supabase
@@ -175,12 +177,40 @@ export async function POST(request: NextRequest) {
     const sendNotificationEmails = async () => {
       const adminEmails = getAdminEmails()
       const starRating = formatStarRating(review_star)
-      const footer = getEmailFooter(serviceName)
+      const footer = isEn ? getEmailFooterEn(serviceName) : getEmailFooter(serviceName)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
       const emailPromises = []
 
       // Template 1: アンケート送信者へのThank youメール
-      const userEmailBody = `この度は、${facilityName}への5段階評価アンケートのご協力、誠にありがとうございます。
+      const userEmailBody = isEn
+        ? `Thank you very much for taking the time to complete the 5-star rating survey for ${facilityName}.
+
+The survey feedback you provided will be shared with ${facilityName} and used to improve customer satisfaction going forward.
+
+Once we have verified your identity and confirmed the content of your review, the Kuchikomiru Secretariat will send you your exclusive benefit. We appreciate your patience.
+
+※ This email is an automated response.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【Your Submitted Information】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 5-Star Rating Survey: ${starRating}
+
+■ Comments / Feedback: ${feedback || ''}
+
+▼▼━━━━━━━ Your Basic Information ━━━━━━━▼▼
+
+■ Name: ${reviewer_name}
+
+■ Email Address: ${email}
+
+■ Google Account Name: ${google_account_name}
+
+■ Privacy Policy: Agreed
+
+${footer}
+`
+        : `この度は、${facilityName}への5段階評価アンケートのご協力、誠にありがとうございます。
 
 お預かりしたアンケート内容は、${facilityName}と共有し、今後の顧客満足度改善に向けて使用させていただきます。
 
@@ -210,7 +240,9 @@ ${footer}
       emailPromises.push(
         sendEmail({
           to: email,
-          subject: `5段階評価アンケートのご協力ありがとうございます。 | ${serviceName}クチコミランキング`,
+          subject: isEn
+            ? `Thank you for your cooperation with our 5-star rating survey. | ${serviceName} Review Ranking`
+            : `5段階評価アンケートのご協力ありがとうございます。 | ${serviceName}クチコミランキング`,
           body: userEmailBody,
         }).catch(error => {
           console.error('Error sending thank you email:', error)
@@ -221,7 +253,42 @@ ${footer}
       if (reviewApprovalEmail) {
         if (starValue >= 3) {
           // Template 2: 高評価（星3〜5）
-          const facilityHighRatingBody = `※${facilityName}の5段階評価アンケートにご回答がありました。
+          const facilityHighRatingBody = isEn
+            ? `※ A response has been received for ${facilityName}'s 5-star rating survey.
+
+【${facilityName}】
+${googleMapUrl || ''}
+
+■ Customer's Survey Response
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- 5-Star Rating Survey
+${starRating}
+
+- Comments / Feedback
+${feedback || ''}
+
+- Name
+${reviewer_name}
+
+- Email Address
+${email}
+
+- Google Account Name
+${google_account_name}
+
+- Privacy Policy
+Agreed
+
+■ Next Steps
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Once our system has located the corresponding Google review for this response, we will notify you separately. Please wait a moment.
+
+※ This email is sent automatically.
+
+${footer}
+`
+            : `※${facilityName}の5段階評価アンケートにご回答がありました。
 
 【${facilityName}】
 ${googleMapUrl || ''}
@@ -260,7 +327,9 @@ ${footer}
             sendEmail({
               to: reviewApprovalEmail,
               bcc: adminEmails,
-              subject: `${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
+              subject: isEn
+                ? `A response has been received for ${facilityName}'s 5-star rating survey. | Kuchikomiru (${serviceName} Review Ranking)`
+                : `${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
               body: facilityHighRatingBody,
             }).catch(error => {
               console.error('Error sending facility high rating email:', error)
@@ -269,7 +338,42 @@ ${footer}
         } else {
           // Template 3: 低評価（星1〜2）
           const approvalUrl = `${baseUrl}/api/review-checks/${data.id}/facility-approve?token=${data.facility_approval_token}`
-          const facilityLowRatingBody = `※ ${facilityName}の5段階評価アンケートにご回答がありました。
+          const facilityLowRatingBody = isEn
+            ? `※ A response has been received for ${facilityName}'s 5-star rating survey.
+
+【${facilityName}】
+${googleMapUrl || ''}
+
+■ Customer's Survey Response
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- 5-Star Rating Survey
+${starRating}
+
+- Comments / Feedback
+${feedback || ''}
+
+- Name
+${reviewer_name}
+
+- Email Address
+${email}
+
+- Google Account Name
+${google_account_name}
+
+- Privacy Policy
+Agreed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▼ To approve this response, please click the link below. ▼
+${approvalUrl}
+
+※ This email is sent automatically.
+※ This link is exclusively for the owner of ${facilityName}. Please do not share it with third parties.
+
+${footer}
+`
+            : `※ ${facilityName}の5段階評価アンケートにご回答がありました。
 
 【${facilityName}】
 ${googleMapUrl || ''}
@@ -307,7 +411,9 @@ ${footer}
             sendEmail({
               to: reviewApprovalEmail,
               bcc: adminEmails,
-              subject: `【承認のお願い】${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
+              subject: isEn
+                ? `[Approval Request] A response has been received for ${facilityName}'s 5-star rating survey. | Kuchikomiru (${serviceName} Review Ranking)`
+                : `【承認のお願い】${facilityName}の5段階評価アンケートにご回答がありました。 | クチコミル（${serviceName}クチコミランキング）`,
               body: facilityLowRatingBody,
             }).catch(error => {
               console.error('Error sending facility low rating email:', error)
